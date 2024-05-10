@@ -1,3 +1,4 @@
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart' as audio;
 import 'package:just_audio_background/just_audio_background.dart';
@@ -19,7 +20,9 @@ void main() async {
   JustAudioMediaKit.ensureInitialized(
       windows: true, linux: true, android: true);
   JustAudioMediaKit.title = 'pffs';
-  var player = audio.AudioPlayer();
+  var player = audio.AudioPlayer(androidApplyAudioAttributes: false);
+  final session = await AudioSession.instance;
+  await session.configure(const AudioSessionConfiguration.music());
   // init background audio service
   if (Platform.isLinux) {
     linux_service.service(player);

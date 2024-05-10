@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -66,6 +65,13 @@ class PlayerState extends ChangeNotifier {
     return null;
   }
 
+  @override
+  void dispose() {
+    flushPlaying();
+    _player.dispose();
+    super.dispose();
+  }
+
   void setPos(int seconds) {
     _player.seek(Duration(seconds: seconds));
   }
@@ -82,6 +88,7 @@ class PlayerState extends ChangeNotifier {
       _player.pause();
     } else {
       if (_currentSource != null) {
+        _player.stop();
         _player.play();
       }
     }
@@ -152,6 +159,7 @@ class PlayerState extends ChangeNotifier {
   }
 
   void setSuqenceIndex(int index) {
+    _player.stop();
     _player.seek(null, index: index);
     _player.play();
   }
