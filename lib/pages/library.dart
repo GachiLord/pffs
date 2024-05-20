@@ -7,6 +7,7 @@ import 'package:pffs/logic/state.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:pffs/util/informing.dart';
 import 'package:provider/provider.dart';
+import 'dart:io' show Platform;
 
 class Library extends StatefulWidget {
   @override
@@ -89,7 +90,7 @@ class _LibraryState extends State<Library> {
 
                     void setLibraryPath(Directory dir) {
                       dir.exists().then((value) {
-                        if (value) {
+                        if (value && !Platform.isWindows) {
                           pathDialog(dir);
                         } else {
                           showTextDialog(

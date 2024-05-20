@@ -16,18 +16,25 @@ Future<void> service(AudioPlayer player) async {
   // Listen to button events and update playback status accordingly
   try {
     smtc.buttonPressStream.listen((event) {
+      print(event);
       switch (event) {
         case PressedButton.play:
-          smtc.setPlaybackStatus(PlaybackStatus.Playing);
           if (player.playing) {
             player.pause();
+            smtc.setPlaybackStatus(PlaybackStatus.Paused);
           } else {
             player.play();
+            smtc.setPlaybackStatus(PlaybackStatus.Playing);
           }
           break;
         case PressedButton.pause:
-          smtc.setPlaybackStatus(PlaybackStatus.Paused);
-          player.pause();
+          if (player.playing) {
+            player.pause();
+            smtc.setPlaybackStatus(PlaybackStatus.Paused);
+          } else {
+            player.play();
+            smtc.setPlaybackStatus(PlaybackStatus.Playing);
+          }
           break;
         case PressedButton.next:
           player.seekToNext();
@@ -36,8 +43,9 @@ Future<void> service(AudioPlayer player) async {
           player.seekToPrevious();
           break;
         case PressedButton.stop:
-          smtc.setPlaybackStatus(PlaybackStatus.Stopped);
-          smtc.disableSmtc();
+          // TODO: add flushPlaying here
+          // smtc.setPlaybackStatus(PlaybackStatus.Stopped);
+          // smtc.disableSmtc();
           player.pause();
           break;
         default:

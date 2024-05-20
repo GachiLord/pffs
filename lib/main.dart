@@ -27,9 +27,9 @@ void main() async {
   // init background audio service
   if (Platform.isLinux) {
     linux_service.service(player);
-    if (Platform.isWindows) {
+  }
+  else if (Platform.isWindows) {
       windows_service.service(player);
-    }
   } else {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
