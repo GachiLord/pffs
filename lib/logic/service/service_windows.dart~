@@ -42,6 +42,7 @@ Future<void> service(PlayerState player) async {
         case PressedButton.stop:
           player.flushPlaying();
           smtc.setPlaybackStatus(PlaybackStatus.Stopped);
+          // smtc.disableSmtc();
           break;
         default:
           print("event $event is not implemented");
