@@ -1,7 +1,7 @@
-import 'package:just_audio/just_audio.dart';
 import 'package:mpris_service/mpris_service.dart';
+import 'package:pffs/logic/state.dart';
 
-Future<void> service(AudioPlayer player) async {
+Future<void> service(PlayerState player) async {
   final instance = await MPRIS.create(
     busName: 'org.mpris.MediaPlayer2.pffs',
     identity: 'pffs',
@@ -10,33 +10,29 @@ Future<void> service(AudioPlayer player) async {
   instance.setEventHandler(
     MPRISEventHandler(
       playPause: () async {
-        if (player.playing) {
-          player.pause();
-        } else {
-          player.play();
-        }
+        player.playPause();
         instance.playbackStatus =
             instance.playbackStatus == MPRISPlaybackStatus.playing
                 ? MPRISPlaybackStatus.paused
                 : MPRISPlaybackStatus.playing;
       },
       stop: () async {
-        player.pause();
+        player.flushPlaying();
         instance.playbackStatus = MPRISPlaybackStatus.stopped;
       },
       play: () async {
-        player.play();
+        player.playPause();
         instance.playbackStatus = MPRISPlaybackStatus.playing;
       },
       pause: () async {
-        player.pause();
+        player.playPause();
         instance.playbackStatus = MPRISPlaybackStatus.paused;
       },
       next: () async {
-        player.seekToNext();
+        player.playNext();
       },
       previous: () async {
-        player.seekToPrevious();
+        player.playPrevious();
       },
     ),
   );
