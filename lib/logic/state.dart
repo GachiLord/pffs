@@ -7,7 +7,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io' show Platform;
+import 'dart:io';
 
 class LibraryState extends ChangeNotifier {
   final SharedPreferences _prefs;
@@ -137,21 +137,51 @@ class PlayerState extends ChangeNotifier {
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
 
+    // TODO: find out what's wrong in here
+    //
+    // collect playlist children
+    // var children = List.empty(growable: true);
+    // for (var i = 0; i < _currentSequnce!.length; i++) {
+    //   var t = _currentSequnce![i];
+    //   var tag = MediaItem(
+    //     // Specify a unique ID for each media item:
+    //     id: i.toString(),
+    //     // Metadata to display in the notification:
+    //     album: playlistName,
+    //     title: t.name,
+    //   );
+    //   File(t.fullPath).exists().then((exist) {
+    //     if (exist) {
+    //       children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
+    //     } else {
+    //       children.add(AudioSource.file(
+    //         t.fullPath,
+    //         tag: tag,
+    //       ));
+    //     }
+    //   });
+    // }
+
     final source = ConcatenatingAudioSource(
       useLazyPreparation: true,
       shuffleOrder: DefaultShuffleOrder(),
-      children: _currentSequnce!
-          .mapIndexed((i, t) => AudioSource.file(
-                t.fullPath,
-                tag: MediaItem(
-                  // Specify a unique ID for each media item:
-                  id: i.toString(),
-                  // Metadata to display in the notification:
-                  album: playlistName,
-                  title: t.name,
-                ),
-              ))
-          .toList(),
+      children: _currentSequnce!.mapIndexed((i, t) {
+        var tag = MediaItem(
+          // Specify a unique ID for each media item:
+          id: i.toString(),
+          // Metadata to display in the notification:
+          album: playlistName,
+          title: t.name,
+        );
+        // TODO: fix this sync call
+        if (!File(t.fullPath).existsSync()) {
+          return AudioSource.asset("assets/silence.mp3", tag: tag);
+        }
+        return AudioSource.file(
+          t.fullPath,
+          tag: tag,
+        );
+      }).toList(),
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
