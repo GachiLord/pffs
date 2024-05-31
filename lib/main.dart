@@ -21,15 +21,17 @@ void main() async {
   JustAudioMediaKit.ensureInitialized(
       windows: true, linux: true, android: true);
   JustAudioMediaKit.title = 'pffs';
-  var player = audio.AudioPlayer(androidApplyAudioAttributes: false);
+  var player = audio.AudioPlayer();
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.music());
+  // init state
+  var libState = LibraryState(prefs);
+  var playerState = PlayerState(prefs, player);
   // init background audio service
   if (Platform.isLinux) {
-    linux_service.service(player);
-  }
-  else if (Platform.isWindows) {
-      windows_service.service(player);
+    linux_service.service(playerState);
+  } else if (Platform.isWindows) {
+    windows_service.service(playerState);
   } else {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
@@ -41,8 +43,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => LibraryState(prefs)),
-        ChangeNotifierProvider(create: (context) => PlayerState(prefs, player))
+        ChangeNotifierProvider(create: (context) => libState),
+        ChangeNotifierProvider(create: (context) => playerState)
       ],
       child: App(
         prefs: prefs,
