@@ -7,6 +7,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io' show Platform;
 
 class LibraryState extends ChangeNotifier {
   final SharedPreferences _prefs;
@@ -88,7 +89,7 @@ class PlayerState extends ChangeNotifier {
       _player.pause();
     } else {
       if (_currentSource != null) {
-        _player.stop();
+        if (!Platform.isWindows) _player.stop();
         _player.play();
       }
     }
@@ -159,7 +160,7 @@ class PlayerState extends ChangeNotifier {
   }
 
   void setSuqenceIndex(int index) {
-    _player.stop();
+    if (Platform.isAndroid) _player.stop();
     _player.seek(null, index: index);
     _player.play();
   }

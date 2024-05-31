@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/library.dart';
 import 'package:pffs/logic/service/service_linux.dart' as linux_service;
+import 'package:pffs/logic/service/service_windows.dart' as windows_service;
 import 'dart:io' show Platform;
 
 void main() async {
@@ -26,6 +27,9 @@ void main() async {
   // init background audio service
   if (Platform.isLinux) {
     linux_service.service(player);
+  }
+  else if (Platform.isWindows) {
+      windows_service.service(player);
   } else {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
