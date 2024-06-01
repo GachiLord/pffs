@@ -49,13 +49,32 @@ class PlayerState extends ChangeNotifier {
     _positionObserver();
     _playingObserver();
   }
+  // state for getters
+  Duration? _latestDuration = Duration.zero;
+  Duration _latestPos = Duration.zero;
 
   PlayingObject get playingObject => _playingObject;
   PlaylistConf? get currentPlaylist => _currentPlaylist;
   bool get playing => _player.playing;
   double get volume => _maxVolume;
-  Duration get pos => _player.position;
-  Duration? get duration => _player.duration;
+  Duration get pos {
+    if (_player.position != Duration.zero) {
+      _latestPos = _player.position;
+      return _player.position;
+    } else {
+      return _latestPos;
+    }
+  }
+
+  Duration? get duration {
+    if (_player.duration == Duration.zero) {
+      return _latestDuration;
+    } else {
+      _latestDuration = _player.duration;
+      return _player.duration;
+    }
+  }
+
   String? get trackName {
     var index = _player.currentIndex;
     if (index != null) {

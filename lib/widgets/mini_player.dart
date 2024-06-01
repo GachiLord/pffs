@@ -58,7 +58,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
             child: SizedBox(
-              height: 7,
+              height: 15,
               child: SliderTheme(
                   data: SliderThemeData(trackShape: CustomTrackShape()),
                   child: Slider(
@@ -100,9 +100,9 @@ class CustomTrackShape extends RoundedRectSliderTrackShape {
     bool isDiscrete = false,
   }) {
     final trackHeight = sliderTheme.trackHeight;
-    final trackLeft = offset.dx + 10;
+    final trackLeft = offset.dx + 20;
     final trackTop = offset.dy + (parentBox.size.height - trackHeight!) / 2;
-    final trackWidth = parentBox.size.width - 30;
+    final trackWidth = parentBox.size.width - 40;
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 }
