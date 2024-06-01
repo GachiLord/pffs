@@ -92,8 +92,8 @@ class PlayerState extends ChangeNotifier {
     super.dispose();
   }
 
-  void setPos(int seconds) {
-    _player.seek(Duration(seconds: seconds));
+  void setPos(int ms) {
+    _player.seek(Duration(milliseconds: ms));
   }
 
   void setVolume(double volume) {

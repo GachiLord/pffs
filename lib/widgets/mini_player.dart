@@ -20,9 +20,12 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
   @override
   Widget build(BuildContext context) {
     return Consumer<PlayerState>(builder: (context, state, child) {
-      var currentPos = pos ?? state.pos.inSeconds.toDouble();
-      var currentMax = state.duration?.inSeconds.toDouble() ?? 1;
+      var currentPos = pos ?? state.pos.inMilliseconds.toDouble();
+      var currentMax = state.duration?.inMilliseconds.toDouble() ?? 1;
       if (currentPos > currentMax) currentMax = currentPos;
+      // check if positions are not zeros
+      if (currentPos < 0) currentPos = 0;
+      if (currentMax < 0) currentMax = 0;
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
