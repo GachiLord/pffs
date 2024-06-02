@@ -16,15 +16,6 @@ Future<PlaylistConf> load(String path) async {
   final json = jsonDecode(file) as Map<String, dynamic>;
   var conf = PlaylistConf.fromJson(json);
 
-  //var libraryPath = p.dirname(path);
-  //var trackToRemove = [];
-  //for (var track in conf.tracks) {
-  //  if (await File(track.getMediaInfo(libraryPath).fullPath).exists() ==
-  //      false) {
-  //    trackToRemove.add(track);
-  //  }
-  //}
-  //conf.tracks.retainWhere((track) => !trackToRemove.contains(track));
   return conf;
 }
 
