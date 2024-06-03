@@ -247,11 +247,50 @@ class PlayerState extends ChangeNotifier {
     _currentSource!.removeAt(index);
   }
 
+  Timer? _soundTimer;
+  int _soundCounter = 0;
+
+  void _soundEffect() {
+    var index = _player.currentIndex;
+    if (_currentPlaylist != null && index != null) {
+      // stop last effect
+      _soundCounter = 0;
+      if (_soundTimer != null) {
+        _soundTimer!.cancel();
+      }
+      // apply effects
+      var track = _currentPlaylist!.tracks[index];
+      var volume = track.volume;
+
+      if (volume.isActive) {
+        _currentVolume = volume.startVolume;
+        _player.setVolume(_currentVolume * _maxVolume);
+        var step = (volume.endVolume - volume.startVolume).abs() /
+            (volume.transitionTimeSeconds > 0
+                ? volume.transitionTimeSeconds
+                : 1);
+        _soundTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+          if (!_player.playing) return;
+
+          if (_soundCounter == volume.transitionTimeSeconds) t.cancel();
+          _soundCounter++;
+          if (volume.endVolume > volume.startVolume) {
+            _currentVolume += step;
+          } else {
+            _currentVolume -= step;
+          }
+          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+        });
+      } else {
+        _currentVolume = 1.0;
+        _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+      }
+    }
+  }
+
   /// Should be called only once
   void _sequenceObserver() async {
-    Timer? timer;
-    int counter = 0;
-    await for (final index in _player.currentIndexStream) {
+    await for (final _ in _player.currentIndexStream) {
       // get the duration via ffmpeg if it is null and we're on Android
       if (_player.duration == null && Platform.isAndroid) {
         try {
@@ -264,43 +303,9 @@ class PlayerState extends ChangeNotifier {
           print("cannot get the durtion $e");
         }
       }
-      // handle playlists
-      if (_currentPlaylist != null && index != null) {
-        // stop last effect
-        counter = 0;
-        if (timer != null) {
-          timer.cancel();
-        }
-        // apply effects
-        var track = _currentPlaylist!.tracks[index];
-        //var skip = track.skip; TODO: implement skip effect
-        var volume = track.volume;
-
-        if (volume.isActive) {
-          _currentVolume = volume.startVolume;
-          _player.setVolume(_currentVolume * _maxVolume);
-          var step = (volume.endVolume - volume.startVolume).abs() /
-              (volume.transitionTimeSeconds > 0
-                  ? volume.transitionTimeSeconds
-                  : 1);
-          timer = Timer.periodic(const Duration(seconds: 1), (t) {
-            if (!_player.playing) return;
-
-            if (counter == volume.transitionTimeSeconds) t.cancel();
-            counter++;
-            if (volume.endVolume > volume.startVolume) {
-              _currentVolume += step;
-            } else {
-              _currentVolume -= step;
-            }
-            _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
-          });
-        } else {
-          _currentVolume = 1.0;
-          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
-        }
-      }
-
+      // apply effects
+      _soundEffect();
+      // update ui
       notifyListeners();
     }
   }
@@ -315,6 +320,7 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _playingObserver() async {
     await for (final _ in _player.playingStream) {
+      _soundEffect();
       notifyListeners();
     }
   }
