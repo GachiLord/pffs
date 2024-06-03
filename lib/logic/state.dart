@@ -252,19 +252,20 @@ class PlayerState extends ChangeNotifier {
     Timer? timer;
     int counter = 0;
     await for (final index in _player.currentIndexStream) {
-      if (_currentPlaylist != null && index != null) {
-        // get the duration via ffmpeg if it is null and we're on Android
-        if (_player.duration == null && Platform.isAndroid) {
-          try {
-            var s = await FFprobeKit.getMediaInformation(
-                _currentSequnce![_player.currentIndex!].fullPath);
-            var info = s.getMediaInformation();
-            _latestDuration =
-                Duration(seconds: double.parse(info!.getDuration()!).toInt());
-          } catch (e) {
-            print("cannot get the durtion $e");
-          }
+      // get the duration via ffmpeg if it is null and we're on Android
+      if (_player.duration == null && Platform.isAndroid) {
+        try {
+          var s = await FFprobeKit.getMediaInformation(
+              _currentSequnce![_player.currentIndex!].fullPath);
+          var info = s.getMediaInformation();
+          _latestDuration =
+              Duration(seconds: double.parse(info!.getDuration()!).toInt());
+        } catch (e) {
+          print("cannot get the durtion $e");
         }
+      }
+      // handle playlists
+      if (_currentPlaylist != null && index != null) {
         // stop last effect
         counter = 0;
         if (timer != null) {

@@ -71,6 +71,7 @@ class _LibraryState extends State<Library> {
                 child: Text(
                   "Incorrect path or insufficient permissions",
                   style: TextStyle(fontSize: 28),
+                  textAlign: TextAlign.center,
                 ),
               );
             }
