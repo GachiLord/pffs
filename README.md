@@ -30,7 +30,7 @@ It is possible to copy files to that folder on a root device or using custom fil
 Nope(tested on Arch btw). Just install mpv and build the app.
 
 ### Windows issues
-Not tested
+Nope
 
 ## Build
 
@@ -40,5 +40,9 @@ flutter build linux
 
 ```bash
 flutter build apk
+```
+
+```bash
+flutter build windows
 ```
 
