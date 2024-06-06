@@ -17,12 +17,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // init key-value store
   final prefs = await SharedPreferences.getInstance();
-  // init player
-  JustAudioMediaKit.ensureInitialized(
-      windows: true, linux: true, android: true);
-  JustAudioMediaKit.title = 'pffs';
-  // TODO: fix audio attrs
-  var player = audio.AudioPlayer(androidApplyAudioAttributes: false);
+  // init player if desktop app
+  if (Platform.isLinux || Platform.isWindows) {
+    JustAudioMediaKit.ensureInitialized(windows: true, linux: true);
+    JustAudioMediaKit.title = 'pffs';
+  }
+  var player = audio.AudioPlayer();
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.music());
   // init state

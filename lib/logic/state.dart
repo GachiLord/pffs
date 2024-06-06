@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:collection/collection.dart';
-import 'package:ffmpeg_kit_flutter/ffprobe_kit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -291,18 +290,6 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _sequenceObserver() async {
     await for (final _ in _player.currentIndexStream) {
-      // get the duration via ffmpeg if it is null and we're on Android
-      if (_player.duration == null && Platform.isAndroid) {
-        try {
-          var s = await FFprobeKit.getMediaInformation(
-              _currentSequnce![_player.currentIndex!].fullPath);
-          var info = s.getMediaInformation();
-          _latestDuration =
-              Duration(seconds: double.parse(info!.getDuration()!).toInt());
-        } catch (e) {
-          print("cannot get the durtion $e");
-        }
-      }
       // apply effects
       _soundEffect();
       // update ui
