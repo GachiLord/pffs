@@ -35,17 +35,17 @@ Nope
 ## Installation
 
 ### Windows
-1. Download windows-bundle-<version>.zip
+1. Download pffs-windows-bundle-***.zip
 1. Unzip in your favorite folder
-1. Run pffs.exe
+1. Run "pffs.exe"
 
 ### Linux
-1. Download linux-bundle-<version>.tar.xz
+1. Download pffs-linux-bundle-***.tar.gz
 1. Unpack to your favorite folder 
 1. Run "pffs" inside this folder or add it to your PATH
 
 ### Android
-1. Download android-<version>.apk
+1. Download android-***.apk
 1. Install it
 
 ## Build
