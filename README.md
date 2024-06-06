@@ -30,7 +30,23 @@ It is possible to copy files to that folder on a root device or using custom fil
 Nope(tested on Arch btw). Just install mpv and build the app.
 
 ### Windows issues
-Not tested
+Nope
+
+## Installation
+
+### Windows
+1. Download windows-bundle-<version>.zip
+1. Unzip in your favorite folder
+1. Run pffs.exe
+
+### Linux
+1. Download linux-bundle-<version>.tar.xz
+1. Unpack to your favorite folder 
+1. Run "pffs" inside this folder or add it to your PATH
+
+### Android
+1. Download android-<version>.apk
+1. Install it
 
 ## Build
 
@@ -40,5 +56,9 @@ flutter build linux
 
 ```bash
 flutter build apk
+```
+
+```bash
+flutter build windows
 ```
 
