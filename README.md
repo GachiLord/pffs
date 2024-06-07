@@ -42,11 +42,13 @@ Nope
 ### Linux
 1. Download pffs-linux-bundle-***.tar.gz
 1. Unpack to your favorite folder 
+1. Install mpv
 1. Run "pffs" inside this folder or add it to your PATH
 
 ### Android
 1. Download android-***.apk
 1. Install it
+1. Run "pffs"
 
 ## Build
 
