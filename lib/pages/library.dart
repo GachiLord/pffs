@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pffs/elements/track.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/logic/storage.dart';
@@ -102,13 +102,17 @@ class _LibraryState extends State<Library> {
                       });
                     }
 
-                    getExternalStorageDirectory().then((dir) {
-                      if (dir != null) {
-                        setLibraryPath(dir);
-                      } else {
-                        setLibraryPath(Directory("/"));
-                      }
-                    }).catchError((_) => setLibraryPath(Directory("/")));
+                    if (Platform.isAndroid) {
+                      Permission.manageExternalStorage.request().then((r) {
+                        setLibraryPath(Directory("/storage/emulated/0/"));
+                      });
+                    }
+                    if (Platform.isLinux) {
+                      setLibraryPath(Directory("/"));
+                    }
+                    if (Platform.isWindows) {
+                      setLibraryPath(Directory("con"));
+                    }
                   },
                   child: const Icon(Icons.folder),
                 ),
