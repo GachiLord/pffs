@@ -20,17 +20,8 @@ App is intended to run on Android, Linux and Windows and be as simple as possibl
 
 ## Current state
 
-At this moment player is usable, but it has many unimplemented things and potential bugs.
-
-### Android issues
-On android(tested on Android 14) library must be located at "Android/data/com.gachilord.pffs/files" because of restrictions of the OS.
-It is possible to copy files to that folder on a root device or using custom file manager.
-
-### Linux issues
-Nope(tested on Arch btw). Just install mpv and build the app.
-
-### Windows issues
-Nope
+At this moment the player is quite comfortable to use. Most of the features work fine,
+although there are some bugs with effects functionality on Android.
 
 ## Installation
 
