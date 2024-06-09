@@ -316,6 +316,8 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _playingObserver() async {
     await for (final _ in _player.playingStream) {
+      // apply effects
+      _soundEffect();
       notifyListeners();
     }
   }
