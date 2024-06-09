@@ -291,8 +291,6 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _sequenceObserver() async {
     await for (final _ in _player.currentIndexStream) {
-      // apply effects
-      // _soundEffect();
       // update ui
       notifyListeners();
     }
@@ -301,8 +299,8 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _processingObserver() async {
     await for (final state in _player.processingStateStream) {
-      // apply effects
       if (state == ProcessingState.ready) {
+        // apply effects
         _soundEffect();
       }
     }
@@ -318,7 +316,6 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _playingObserver() async {
     await for (final _ in _player.playingStream) {
-      _soundEffect();
       notifyListeners();
     }
   }
