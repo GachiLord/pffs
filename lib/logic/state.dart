@@ -48,6 +48,7 @@ class PlayerState extends ChangeNotifier {
     _sequenceObserver();
     _positionObserver();
     _playingObserver();
+    _processingObserver();
   }
   // state for getters
   Duration? _latestDuration = Duration.zero;
@@ -291,9 +292,19 @@ class PlayerState extends ChangeNotifier {
   void _sequenceObserver() async {
     await for (final _ in _player.currentIndexStream) {
       // apply effects
-      _soundEffect();
+      // _soundEffect();
       // update ui
       notifyListeners();
+    }
+  }
+
+  /// Should be called only once
+  void _processingObserver() async {
+    await for (final state in _player.processingStateStream) {
+      // apply effects
+      if (state == ProcessingState.ready) {
+        _soundEffect();
+      }
     }
   }
 
