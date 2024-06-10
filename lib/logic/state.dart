@@ -291,6 +291,8 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _sequenceObserver() async {
     await for (final _ in _player.currentIndexStream) {
+      // apply effects
+      _soundEffect();
       // update ui
       notifyListeners();
     }
