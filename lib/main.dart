@@ -23,6 +23,7 @@ void main() async {
     JustAudioMediaKit.title = 'pffs';
   }
   var player = audio.AudioPlayer();
+  player.setSkipSilenceEnabled(true);
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.music());
   // init state
