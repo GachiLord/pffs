@@ -38,6 +38,7 @@ void main() async {
     windows_service.service(playerState);
   } else {
     await JustAudioBackground.init(
+      androidNotificationIcon: 'drawable/player_icon',
       androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
       androidNotificationChannelName: 'Audio playback',
       androidNotificationOngoing: true,
