@@ -22,8 +22,10 @@ void main() async {
     JustAudioMediaKit.ensureInitialized(windows: true, linux: true);
     JustAudioMediaKit.title = 'pffs';
   }
-  var player = audio.AudioPlayer();
-  player.setSkipSilenceEnabled(true);
+  var player = audio.AudioPlayer(
+      audioLoadConfiguration: const audio.AudioLoadConfiguration(
+          androidLoadControl: audio.AndroidLoadControl(
+              minBufferDuration: Duration(seconds: 20))));
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.music());
   // init state
