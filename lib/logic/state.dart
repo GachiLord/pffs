@@ -300,17 +300,27 @@ class PlayerState extends ChangeNotifier {
 
   /// Should be called only once
   void _processingObserver() async {
-    await for (final state in _player.processingStateStream) {
-      if (state == ProcessingState.ready) {
-        // apply effects
-        _soundEffect();
-      }
-    }
+    // await for (final state in _player.processingStateStream) {
+    //   if (state == ProcessingState.ready) {
+    //     // apply effects
+    //     _soundEffect();
+    //   }
+    // }
   }
 
   /// Should be called only once
   void _positionObserver() async {
-    await for (final _ in _player.positionStream) {
+    await for (final pos in _player.positionStream) {
+      // if next track has volume conf
+      // set _currentVolume to its startVolume
+      var d = _player.duration ?? const Duration(seconds: 400);
+      if (pos >= (d - const Duration(seconds: 1))) {
+        var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
+        if (_currentPlaylist != null && nextVolume.isActive) {
+          _currentVolume = nextVolume.startVolume;
+          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+        }
+      }
       notifyListeners();
     }
   }
