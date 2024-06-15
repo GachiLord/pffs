@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -8,6 +7,7 @@ import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 class LibraryState extends ChangeNotifier {
   final SharedPreferences _prefs;
@@ -125,26 +125,31 @@ class PlayerState extends ChangeNotifier {
     _player.seekToPrevious();
   }
 
-  void playTracks(List<MediaInfo> tracks, int startIndex) {
+  void playTracks(List<MediaInfo> tracks, int startIndex) async {
     _currentSequnce = tracks;
     _currentPlaylist = null;
     _playingObject = PlayingObject.library;
 
+    List<AudioSource> children = List.empty(growable: true);
+    for (var i = 0; i < tracks.length; i++) {
+      var t = tracks[i];
+      var artPath = p.setExtension(t.fullPath, ".png");
+      children.add(AudioSource.file(t.fullPath,
+          tag: MediaItem(
+              // Specify a unique ID for each media item:
+              id: i.toString(),
+              // Metadata to display in the notification:
+              album: "Library",
+              title: t.name,
+              extras: {"loadThumbnailUri": true},
+              artUri:
+                  await File(artPath).exists() ? Uri.file(artPath) : null)));
+    }
+
     final source = ConcatenatingAudioSource(
       useLazyPreparation: true,
       shuffleOrder: DefaultShuffleOrder(),
-      children: tracks
-          .mapIndexed((i, t) => AudioSource.file(
-                t.fullPath,
-                tag: MediaItem(
-                  // Specify a unique ID for each media item:
-                  id: i.toString(),
-                  // Metadata to display in the notification:
-                  album: "Library",
-                  title: t.name,
-                ),
-              ))
-          .toList(),
+      children: children,
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
@@ -153,57 +158,38 @@ class PlayerState extends ChangeNotifier {
   }
 
   void playPlaylist(String libraryPath, PlaylistConf playlist,
-      String playlistName, int startIndex) {
+      String playlistName, int startIndex) async {
     _currentSequnce =
         playlist.tracks.map((t) => t.getMediaInfo(libraryPath)).toList();
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
 
-    // TODO: find out what's wrong in here
-    //
-    // collect playlist children
-    // var children = List.empty(growable: true);
-    // for (var i = 0; i < _currentSequnce!.length; i++) {
-    //   var t = _currentSequnce![i];
-    //   var tag = MediaItem(
-    //     // Specify a unique ID for each media item:
-    //     id: i.toString(),
-    //     // Metadata to display in the notification:
-    //     album: playlistName,
-    //     title: t.name,
-    //   );
-    //   File(t.fullPath).exists().then((exist) {
-    //     if (exist) {
-    //       children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
-    //     } else {
-    //       children.add(AudioSource.file(
-    //         t.fullPath,
-    //         tag: tag,
-    //       ));
-    //     }
-    //   });
-    // }
-
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      shuffleOrder: DefaultShuffleOrder(),
-      children: _currentSequnce!.mapIndexed((i, t) {
-        var tag = MediaItem(
+    List<AudioSource> children = List.empty(growable: true);
+    for (var i = 0; i < _currentSequnce!.length; i++) {
+      var t = _currentSequnce![i];
+      var artPath = p.setExtension(t.fullPath, ".png");
+      var tag = MediaItem(
           // Specify a unique ID for each media item:
           id: i.toString(),
           // Metadata to display in the notification:
           album: playlistName,
           title: t.name,
-        );
-        // TODO: fix this sync call
-        if (!File(t.fullPath).existsSync()) {
-          return AudioSource.asset("assets/silence.mp3", tag: tag);
-        }
-        return AudioSource.file(
+          extras: {"loadThumbnailUri": true},
+          artUri: await File(artPath).exists() ? Uri.file(artPath) : null);
+      if (await File(t.fullPath).exists() == false) {
+        children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
+      } else {
+        children.add(AudioSource.file(
           t.fullPath,
           tag: tag,
-        );
-      }).toList(),
+        ));
+      }
+    }
+
+    final source = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      shuffleOrder: DefaultShuffleOrder(),
+      children: children,
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
