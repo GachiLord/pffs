@@ -41,16 +41,20 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   );
   // handle player events
   await for (var _ in player.currentIndexStream) {
-    var trackPath = player.currentTrack!.fullPath;
-    var playlistPath =
-        p.join(prefs.libraryPath ?? "", player.playingObjectName);
+    if (player.currentTrack != null) {
+      instance.playbackStatus = MPRISPlaybackStatus.playing;
 
-    instance.metadata = MPRISMetadata(
-      Uri.parse(trackPath),
-      artUrl:
-          await getMediaArtUri(trackPath) ?? await getMediaArtUri(playlistPath),
-      album: player.playingObjectName,
-      title: player.trackName,
-    );
+      var trackPath = player.currentTrack!.fullPath;
+      var playlistPath =
+          p.join(prefs.libraryPath ?? "", player.playingObjectName);
+
+      instance.metadata = MPRISMetadata(
+        Uri.parse(trackPath),
+        artUrl: await getMediaArtUri(trackPath) ??
+            await getMediaArtUri(playlistPath),
+        artist: [player.playingObjectName ?? "Library"],
+        title: player.trackName,
+      );
+    }
   }
 }
