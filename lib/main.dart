@@ -33,11 +33,13 @@ void main() async {
   var playerState = PlayerState(prefs, player);
   // init background audio service
   if (Platform.isLinux) {
-    linux_service.service(playerState);
+    linux_service.service(playerState, libState);
   } else if (Platform.isWindows) {
-    windows_service.service(playerState);
+    windows_service.service(playerState, libState);
   } else {
     await JustAudioBackground.init(
+      preloadArtwork: true,
+      androidNotificationIcon: 'drawable/player_icon',
       androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
       androidNotificationChannelName: 'Audio playback',
       androidNotificationOngoing: true,

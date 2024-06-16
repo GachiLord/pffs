@@ -1,7 +1,10 @@
 import 'package:pffs/logic/state.dart';
+import 'package:pffs/logic/storage.dart';
 import 'package:smtc_windows/smtc_windows.dart';
+import 'dart:io' show Platform;
+import 'package:path/path.dart' as p;
 
-Future<void> service(PlayerState player) async {
+Future<void> service(PlayerState player, LibraryState prefs) async {
   var smtc = SMTCWindows(
     config: const SMTCConfig(
       fastForwardEnabled: true,
@@ -50,5 +53,18 @@ Future<void> service(PlayerState player) async {
     });
   } catch (e) {
     print("Error: $e");
+  }
+  // handle player events
+  await for (var _ in player.currentIndexStream) {
+    if (player.currentTrack != null) {
+      smtc.setPlaybackStatus(PlaybackStatus.Playing);
+
+      smtc.updateMetadata(
+        MusicMetadata(
+            title: player.trackName,
+            artist: player.playingObjectName,
+ 	),
+      );
+    }
   }
 }

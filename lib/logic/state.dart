@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -8,6 +7,7 @@ import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 class LibraryState extends ChangeNotifier {
   final SharedPreferences _prefs;
@@ -39,6 +39,7 @@ class PlayerState extends ChangeNotifier {
   /// should not be modified in this class, because it is a ref to ui state
   PlaylistConf? _currentPlaylist;
   PlayingObject _playingObject = PlayingObject.nothing;
+  String? _playingObjectName;
 
   PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
@@ -54,7 +55,17 @@ class PlayerState extends ChangeNotifier {
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
 
+  MediaInfo? get currentTrack {
+    var index = _player.currentIndex;
+    if (index != null && _currentSequnce != null) {
+      return _currentSequnce![index];
+    }
+    return null;
+  }
+
+  Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
+  String? get playingObjectName => _playingObjectName;
   PlaylistConf? get currentPlaylist => _currentPlaylist;
   bool get playing => _player.playing;
   double get volume => _maxVolume;
@@ -68,8 +79,6 @@ class PlayerState extends ChangeNotifier {
   }
 
   Duration? get duration {
-    //print(_player.duration);
-    //print(_latestDuration);
     if (_player.duration == Duration.zero || _player.duration == null) {
       return _latestDuration;
     } else {
@@ -111,7 +120,7 @@ class PlayerState extends ChangeNotifier {
       _player.pause();
     } else {
       if (_currentSource != null) {
-        if (!Platform.isWindows) _player.stop();
+        if (!Platform.isWindows && !Platform.isLinux) _player.stop();
         _player.play();
       }
     }
@@ -125,26 +134,30 @@ class PlayerState extends ChangeNotifier {
     _player.seekToPrevious();
   }
 
-  void playTracks(List<MediaInfo> tracks, int startIndex) {
+  void playTracks(List<MediaInfo> tracks, int startIndex) async {
     _currentSequnce = tracks;
     _currentPlaylist = null;
     _playingObject = PlayingObject.library;
+    _playingObjectName = "Library";
+
+    List<AudioSource> children = List.empty(growable: true);
+    for (var i = 0; i < tracks.length; i++) {
+      var t = tracks[i];
+      children.add(AudioSource.file(t.fullPath,
+          tag: MediaItem(
+              // Specify a unique ID for each media item:
+              id: i.toString(),
+              // Metadata to display in the notification:
+              album: "Library",
+              title: t.name,
+              extras: {"loadThumbnailUri": true},
+              artUri: await getMediaArtUri(t.fullPath))));
+    }
 
     final source = ConcatenatingAudioSource(
       useLazyPreparation: true,
       shuffleOrder: DefaultShuffleOrder(),
-      children: tracks
-          .mapIndexed((i, t) => AudioSource.file(
-                t.fullPath,
-                tag: MediaItem(
-                  // Specify a unique ID for each media item:
-                  id: i.toString(),
-                  // Metadata to display in the notification:
-                  album: "Library",
-                  title: t.name,
-                ),
-              ))
-          .toList(),
+      children: children,
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
@@ -153,57 +166,39 @@ class PlayerState extends ChangeNotifier {
   }
 
   void playPlaylist(String libraryPath, PlaylistConf playlist,
-      String playlistName, int startIndex) {
+      String playlistName, int startIndex) async {
     _currentSequnce =
         playlist.tracks.map((t) => t.getMediaInfo(libraryPath)).toList();
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
+    _playingObjectName = playlistName;
 
-    // TODO: find out what's wrong in here
-    //
-    // collect playlist children
-    // var children = List.empty(growable: true);
-    // for (var i = 0; i < _currentSequnce!.length; i++) {
-    //   var t = _currentSequnce![i];
-    //   var tag = MediaItem(
-    //     // Specify a unique ID for each media item:
-    //     id: i.toString(),
-    //     // Metadata to display in the notification:
-    //     album: playlistName,
-    //     title: t.name,
-    //   );
-    //   File(t.fullPath).exists().then((exist) {
-    //     if (exist) {
-    //       children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
-    //     } else {
-    //       children.add(AudioSource.file(
-    //         t.fullPath,
-    //         tag: tag,
-    //       ));
-    //     }
-    //   });
-    // }
-
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      shuffleOrder: DefaultShuffleOrder(),
-      children: _currentSequnce!.mapIndexed((i, t) {
-        var tag = MediaItem(
+    List<AudioSource> children = List.empty(growable: true);
+    for (var i = 0; i < _currentSequnce!.length; i++) {
+      var t = _currentSequnce![i];
+      var tag = MediaItem(
           // Specify a unique ID for each media item:
           id: i.toString(),
           // Metadata to display in the notification:
           album: playlistName,
           title: t.name,
-        );
-        // TODO: fix this sync call
-        if (!File(t.fullPath).existsSync()) {
-          return AudioSource.asset("assets/silence.mp3", tag: tag);
-        }
-        return AudioSource.file(
+          extras: {"loadThumbnailUri": true},
+          artUri: await getMediaArtUri(t.fullPath) ??
+              await getMediaArtUri(p.join(libraryPath, playlistName)));
+      if (await File(t.fullPath).exists() == false) {
+        children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
+      } else {
+        children.add(AudioSource.file(
           t.fullPath,
           tag: tag,
-        );
-      }).toList(),
+        ));
+      }
+    }
+
+    final source = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      shuffleOrder: DefaultShuffleOrder(),
+      children: children,
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
