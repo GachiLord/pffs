@@ -59,24 +59,11 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     if (player.currentTrack != null) {
       smtc.setPlaybackStatus(PlaybackStatus.Playing);
 
-      final trackPath = player.currentTrack!.fullPath;
-      final playlistPath =
-          p.join(prefs.libraryPath ?? "", player.playingObjectName);
-
-      String? thumbnail;
-      final trackUri = await getMediaArtUri(trackPath);
-      if (trackUri != null) {
-        thumbnail = trackUri.toFilePath(windows: Platform.isWindows);
-      } else {
-        final playlistUri = await getMediaArtUri(playlistPath);
-        thumbnail = playlistUri!.toFilePath(windows: Platform.isWindows);
-      }
-
       smtc.updateMetadata(
         MusicMetadata(
             title: player.trackName,
             artist: player.playingObjectName,
-            thumbnail: thumbnail),
+ 	),
       );
     }
   }
