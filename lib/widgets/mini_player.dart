@@ -3,6 +3,7 @@ import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
+import 'dart:io';
 
 class MiniPlayerAppBar extends StatefulWidget implements PreferredSizeWidget {
   const MiniPlayerAppBar({super.key});
@@ -29,7 +30,21 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
-          title: Text(state.trackName ?? ""),
+          title: state.currentArtUriSync != null
+              ? Row(
+                  children: [
+                    Image.file(
+                      File.fromUri(state.currentArtUriSync!),
+                      width: 60,
+                      height: 40,
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 10),
+                      child: Text(state.trackName ?? ""),
+                    )
+                  ],
+                )
+              : Text(state.trackName ?? ""),
           actions: [
             CustomPopup(
                 content: SizedBox(
