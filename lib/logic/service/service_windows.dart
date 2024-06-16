@@ -1,7 +1,7 @@
 import 'package:pffs/logic/state.dart';
 import 'package:smtc_windows/smtc_windows.dart';
 
-Future<void> service(PlayerState player) async {
+Future<void> service(PlayerState player, LibraryState prefs) async {
   var smtc = SMTCWindows(
     config: const SMTCConfig(
       fastForwardEnabled: true,

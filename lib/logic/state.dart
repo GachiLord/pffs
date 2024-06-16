@@ -39,6 +39,7 @@ class PlayerState extends ChangeNotifier {
   /// should not be modified in this class, because it is a ref to ui state
   PlaylistConf? _currentPlaylist;
   PlayingObject _playingObject = PlayingObject.nothing;
+  String? _playingObjectName;
 
   PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
@@ -54,8 +55,17 @@ class PlayerState extends ChangeNotifier {
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
 
+  MediaInfo? get currentTrack {
+    var index = _player.currentIndex;
+    if (index != null && _currentSequnce != null) {
+      return _currentSequnce![index];
+    }
+    return null;
+  }
+
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
+  String? get playingObjectName => _playingObjectName;
   PlaylistConf? get currentPlaylist => _currentPlaylist;
   bool get playing => _player.playing;
   double get volume => _maxVolume;
@@ -128,6 +138,7 @@ class PlayerState extends ChangeNotifier {
     _currentSequnce = tracks;
     _currentPlaylist = null;
     _playingObject = PlayingObject.library;
+    _playingObjectName = "Library";
 
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < tracks.length; i++) {
@@ -160,6 +171,7 @@ class PlayerState extends ChangeNotifier {
         playlist.tracks.map((t) => t.getMediaInfo(libraryPath)).toList();
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
+    _playingObjectName = playlistName;
 
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < _currentSequnce!.length; i++) {

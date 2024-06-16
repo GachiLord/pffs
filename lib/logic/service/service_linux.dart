@@ -1,12 +1,15 @@
 import 'package:mpris_service/mpris_service.dart';
 import 'package:pffs/logic/state.dart';
+import 'package:path/path.dart' as p;
+import 'package:pffs/logic/storage.dart';
 
-Future<void> service(PlayerState player) async {
+Future<void> service(PlayerState player, LibraryState prefs) async {
   final instance = await MPRIS.create(
     busName: 'org.mpris.MediaPlayer2.pffs',
     identity: 'pffs',
     desktopEntry: '/usr/share/applications/pffs',
   );
+  // handle mpris events
   instance.setEventHandler(
     MPRISEventHandler(
       playPause: () async {
@@ -36,4 +39,18 @@ Future<void> service(PlayerState player) async {
       },
     ),
   );
+  // handle player events
+  await for (var _ in player.currentIndexStream) {
+    var trackPath = player.currentTrack!.fullPath;
+    var playlistPath =
+        p.join(prefs.libraryPath ?? "", player.playingObjectName);
+
+    instance.metadata = MPRISMetadata(
+      Uri.parse(trackPath),
+      artUrl:
+          await getMediaArtUri(trackPath) ?? await getMediaArtUri(playlistPath),
+      album: player.playingObjectName,
+      title: player.trackName,
+    );
+  }
 }
