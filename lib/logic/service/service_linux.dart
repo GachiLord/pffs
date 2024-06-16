@@ -44,8 +44,8 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     if (player.currentTrack != null) {
       instance.playbackStatus = MPRISPlaybackStatus.playing;
 
-      var trackPath = player.currentTrack!.fullPath;
-      var playlistPath =
+      final trackPath = player.currentTrack!.fullPath;
+      final playlistPath =
           p.join(prefs.libraryPath ?? "", player.playingObjectName);
 
       instance.metadata = MPRISMetadata(

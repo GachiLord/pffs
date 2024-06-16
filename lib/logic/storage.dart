@@ -135,5 +135,7 @@ Future<void> deleteEntity(String fullPath) async {
 
 Future<Uri?> getMediaArtUri(String mediaFullPath) async {
   var artPath = p.setExtension(mediaFullPath, ".png");
-  return await File(artPath).exists() ? Uri.file(artPath) : null;
+  return await File(artPath).exists()
+      ? Uri.file(artPath, windows: Platform.isWindows)
+      : null;
 }
