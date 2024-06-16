@@ -54,6 +54,7 @@ class PlayerState extends ChangeNotifier {
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
 
+  Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
   PlaylistConf? get currentPlaylist => _currentPlaylist;
   bool get playing => _player.playing;
@@ -68,8 +69,6 @@ class PlayerState extends ChangeNotifier {
   }
 
   Duration? get duration {
-    //print(_player.duration);
-    //print(_latestDuration);
     if (_player.duration == Duration.zero || _player.duration == null) {
       return _latestDuration;
     } else {
@@ -133,7 +132,6 @@ class PlayerState extends ChangeNotifier {
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < tracks.length; i++) {
       var t = tracks[i];
-      var artPath = p.setExtension(t.fullPath, ".png");
       children.add(AudioSource.file(t.fullPath,
           tag: MediaItem(
               // Specify a unique ID for each media item:
@@ -142,8 +140,7 @@ class PlayerState extends ChangeNotifier {
               album: "Library",
               title: t.name,
               extras: {"loadThumbnailUri": true},
-              artUri:
-                  await File(artPath).exists() ? Uri.file(artPath) : null)));
+              artUri: await getMediaArtUri(t.fullPath))));
     }
 
     final source = ConcatenatingAudioSource(
@@ -167,7 +164,6 @@ class PlayerState extends ChangeNotifier {
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < _currentSequnce!.length; i++) {
       var t = _currentSequnce![i];
-      var artPath = p.setExtension(t.fullPath, ".png");
       var tag = MediaItem(
           // Specify a unique ID for each media item:
           id: i.toString(),
@@ -175,7 +171,8 @@ class PlayerState extends ChangeNotifier {
           album: playlistName,
           title: t.name,
           extras: {"loadThumbnailUri": true},
-          artUri: await File(artPath).exists() ? Uri.file(artPath) : null);
+          artUri: await getMediaArtUri(t.fullPath) ??
+              await getMediaArtUri(p.join(libraryPath, playlistName)));
       if (await File(t.fullPath).exists() == false) {
         children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
       } else {
