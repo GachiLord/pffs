@@ -30,21 +30,33 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
-          title: state.currentArtUriSync != null
+          title: (state.currentArtUriSync != null && !Platform.isAndroid)
               ? Row(
                   children: [
-                    Image.file(
-                      File.fromUri(state.currentArtUriSync!),
-                      width: 60,
-                      height: 40,
+                    Material(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7)),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.file(
+                        File.fromUri(state.currentArtUriSync!),
+                        width: 60,
+                        height: 40,
+                      ),
                     ),
-                    Container(
+                    Flexible(
+                        child: Container(
                       margin: const EdgeInsets.only(left: 10),
-                      child: Text(state.trackName ?? ""),
-                    )
+                      child: Text(
+                        state.trackName ?? "",
+                        overflow: TextOverflow.fade,
+                      ),
+                    ))
                   ],
                 )
-              : Text(state.trackName ?? ""),
+              : Text(
+                  state.trackName ?? "",
+                  overflow: TextOverflow.fade,
+                ),
           actions: [
             CustomPopup(
                 content: SizedBox(
