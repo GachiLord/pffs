@@ -35,8 +35,9 @@ class _PlaylistsState extends State<Playlists> {
                           .then((info) => items.then((value) {
                                 setState(() => value.add(info));
                               }))
-                          .catchError((_) =>
-                              showToast(context, "Name exists or invalid"));
+                          .catchError((_) {
+                        showToast(context, "Name exists or invalid");
+                      });
                     });
                   },
                   child: const Icon(Icons.add),
@@ -58,54 +59,63 @@ class _PlaylistsState extends State<Playlists> {
                                         libraryPath: widget.path!)),
                               );
                             },
-                            child: GridTile(
-                              footer: Material(
-                                color: Colors.transparent,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                      bottom: Radius.circular(4)),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: GridTileBar(
-                                  backgroundColor: Colors.black45,
-                                  title: Text(playlist.name),
-                                  trailing: PopupMenuButton<String>(
-                                      icon: const Icon(Icons.menu),
-                                      itemBuilder: (BuildContext context) =>
-                                          <PopupMenuEntry<String>>[
-                                            PopupMenuItem<String>(
-                                              value: playlist.fullPath,
-                                              child: const Text("Delete"),
-                                              onTap: () {
-                                                showPrompt(context,
-                                                    'Delete "${playlist.name}"?',
-                                                    (ok) {
-                                                  if (ok) {
-                                                    deleteEntity(
-                                                            playlist.fullPath)
-                                                        .then((_) {
-                                                      setState(() {
-                                                        items.then((value) =>
-                                                            value.remove(
-                                                                playlist));
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: GridTile(
+                                footer: Material(
+                                  color: Colors.transparent,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(4)),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: GridTileBar(
+                                    backgroundColor: Colors.black45,
+                                    title: Text(playlist.name),
+                                    trailing: PopupMenuButton<String>(
+                                        icon: const Icon(Icons.menu),
+                                        itemBuilder: (BuildContext context) =>
+                                            <PopupMenuEntry<String>>[
+                                              PopupMenuItem<String>(
+                                                value: playlist.fullPath,
+                                                child: const Text("Delete"),
+                                                onTap: () {
+                                                  showPrompt(context,
+                                                      'Delete "${playlist.name}"?',
+                                                      (ok) {
+                                                    if (ok) {
+                                                      deleteEntity(
+                                                              playlist.fullPath)
+                                                          .then((_) {
+                                                        setState(() {
+                                                          items.then((value) =>
+                                                              value.remove(
+                                                                  playlist));
+                                                        });
+                                                      }).catchError((_) {
+                                                        showToast(context,
+                                                            "Failed to delete the playlist");
                                                       });
-                                                    }).catchError((_) => showToast(
-                                                            context,
-                                                            "Failed to delete the playlist"));
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                          ]),
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            ]),
+                                  ),
                                 ),
+                                child: playlist.artUri != null
+                                    ? Image.file(File.fromUri(playlist.artUri),
+                                        fit: BoxFit.cover)
+                                    : Container(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondaryContainer,
+                                        child: const Icon(
+                                          Icons.music_note_outlined,
+                                          size: 80,
+                                        ),
+                                      ),
                               ),
-                              child: playlist.artUri != null
-                                  ? Image.file(File.fromUri(playlist.artUri),
-                                      fit: BoxFit.cover)
-                                  : const Icon(
-                                      Icons.music_note_outlined,
-                                      size: 80,
-                                    ),
                             ),
                           ) as Widget)
                       .toList(),
