@@ -54,6 +54,7 @@ class PlayerState extends ChangeNotifier {
   // state for getters
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
+  Uri? _currentArtUri;
 
   MediaInfo? get currentTrack {
     var index = _player.currentIndex;
@@ -61,6 +62,25 @@ class PlayerState extends ChangeNotifier {
       return _currentSequnce![index];
     }
     return null;
+  }
+
+  Future<Uri?> get currentArtUri async {
+    var index = _player.currentIndex;
+
+    if (index != null && _currentSequnce != null) {
+      final trackPath = _currentSequnce![index].fullPath;
+      final playlistPath =
+          p.join(_prefs.getString("libraryPath") ?? "", _playingObjectName);
+
+      return await getMediaArtUri(trackPath) ??
+          await getMediaArtUri(playlistPath);
+    }
+
+    return null;
+  }
+
+  Uri? get currentArtUriSync {
+    return _currentArtUri;
   }
 
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
@@ -163,6 +183,8 @@ class PlayerState extends ChangeNotifier {
     _player.setAudioSource(source, initialIndex: startIndex);
     _player.setLoopMode(LoopMode.all);
     _player.play();
+    // update art image cache
+    _updateArtImage();
   }
 
   void playPlaylist(String libraryPath, PlaylistConf playlist,
@@ -204,6 +226,8 @@ class PlayerState extends ChangeNotifier {
     _player.setAudioSource(source, initialIndex: startIndex);
     _player.setLoopMode(LoopMode.all);
     _player.play();
+    // update art image cache
+    _updateArtImage();
   }
 
   void setSuqenceIndex(int index) {
@@ -283,9 +307,27 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
+  void _updateArtImage() async {
+    var index = _player.currentIndex;
+
+    if (index != null && _currentSequnce != null) {
+      final trackPath = _currentSequnce![index].fullPath;
+      final playlistPath =
+          p.join(_prefs.getString("libraryPath") ?? "", _playingObjectName);
+
+      _currentArtUri =
+          await getMediaArtUri(trackPath) ?? await getMediaArtUri(playlistPath);
+    } else {
+      _currentArtUri = null;
+    }
+    notifyListeners();
+  }
+
   /// Should be called only once
   void _sequenceObserver() async {
     await for (final _ in _player.currentIndexStream) {
+      // update art image cache
+      _updateArtImage();
       // apply effects
       _soundEffect();
       // update ui

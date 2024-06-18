@@ -1,8 +1,5 @@
 import 'package:pffs/logic/state.dart';
-import 'package:pffs/logic/storage.dart';
 import 'package:smtc_windows/smtc_windows.dart';
-import 'dart:io' show Platform;
-import 'package:path/path.dart' as p;
 
 Future<void> service(PlayerState player, LibraryState prefs) async {
   var smtc = SMTCWindows(
@@ -61,9 +58,9 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
 
       smtc.updateMetadata(
         MusicMetadata(
-            title: player.trackName,
-            artist: player.playingObjectName,
- 	),
+          title: player.trackName,
+          artist: player.playingObjectName,
+        ),
       );
     }
   }

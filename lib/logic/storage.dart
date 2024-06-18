@@ -4,11 +4,12 @@ import 'package:pffs/logic/core.dart';
 import 'package:path/path.dart' as p;
 
 class MediaInfo {
+  final Uri? artUri;
   final String relativePath;
   final String fullPath;
   final String name;
 
-  MediaInfo(this.relativePath, this.fullPath, this.name);
+  MediaInfo(this.artUri, this.relativePath, this.fullPath, this.name);
 }
 
 Future<PlaylistConf> load(String path) async {
@@ -28,7 +29,8 @@ Future<List<MediaInfo>> listPlaylists(String? libraryPath) async {
     var fileName = p.basename(fullPath);
     if (p.extension(fileName) == ".json") {
       var name = p.basenameWithoutExtension(fileName);
-      items.add(MediaInfo(fileName, fullPath, name));
+      var artUri = await getMediaArtUri(fullPath);
+      items.add(MediaInfo(artUri, fileName, fullPath, name));
     }
   }
 
@@ -42,7 +44,9 @@ Future<List<MediaInfo>> listPlaylistTracks(
   filePath = p.setExtension(filePath, ".json");
   var tracks = await load(filePath);
   for (var track in tracks.tracks) {
-    items.add(MediaInfo(track.relativePath, filePath, track.name));
+    var trackPath = p.join(libraryPath, track.relativePath);
+    var artUri = await getMediaArtUri(trackPath);
+    items.add(MediaInfo(artUri, track.relativePath, trackPath, track.name));
   }
 
   return items;
@@ -69,7 +73,8 @@ Future<List<MediaInfo>> listTracks(String? libraryPath) async {
     var fileName = p.basename(fullPath);
     if (musicFiles.contains(p.extension(fullPath).toLowerCase())) {
       var name = p.basenameWithoutExtension(fileName);
-      items.add(MediaInfo(fileName, fullPath, name));
+      var artUri = await getMediaArtUri(fullPath);
+      items.add(MediaInfo(artUri, fileName, fullPath, name));
     }
   }
 
@@ -89,8 +94,9 @@ Future<MediaInfo> createPlaylist(
   if (await file.exists() || name == "") {
     throw PathExistsException(path, const OSError("Path exists"));
   }
+  var artUri = await getMediaArtUri(path);
   file.writeAsString(jsonEncode(playlist.toJson()));
-  return MediaInfo(relativePath, path, name);
+  return MediaInfo(artUri, relativePath, path, name);
 }
 
 Future<void> setTrackIndexPlaylist(

@@ -1,7 +1,5 @@
 import 'package:mpris_service/mpris_service.dart';
 import 'package:pffs/logic/state.dart';
-import 'package:path/path.dart' as p;
-import 'package:pffs/logic/storage.dart';
 
 Future<void> service(PlayerState player, LibraryState prefs) async {
   final instance = await MPRIS.create(
@@ -45,13 +43,10 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
       instance.playbackStatus = MPRISPlaybackStatus.playing;
 
       final trackPath = player.currentTrack!.fullPath;
-      final playlistPath =
-          p.join(prefs.libraryPath ?? "", player.playingObjectName);
 
       instance.metadata = MPRISMetadata(
         Uri.parse(trackPath),
-        artUrl: await getMediaArtUri(trackPath) ??
-            await getMediaArtUri(playlistPath),
+        artUrl: await player.currentArtUri,
         artist: [player.playingObjectName ?? "Library"],
         title: player.trackName,
       );

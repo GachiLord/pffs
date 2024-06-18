@@ -33,7 +33,8 @@ class TrackConf {
       required this.skip});
 
   MediaInfo getMediaInfo(String libraryPath) {
-    return MediaInfo(relativePath, p.join(libraryPath, relativePath), name);
+    return MediaInfo(
+        null, relativePath, p.join(libraryPath, relativePath), name);
   }
 
   /// Connect the generated [_$TrackConfFromJson] function to the `fromJson`

@@ -7,7 +7,6 @@ import 'package:pffs/logic/state.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:pffs/util/informing.dart';
 import 'package:provider/provider.dart';
-import 'dart:io' show Platform;
 
 class Library extends StatefulWidget {
   @override
@@ -25,7 +24,11 @@ class _LibraryState extends State<Library> {
           initialData: const [],
           future: listTracks(state.libraryPath),
           builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-            Widget output = const Text("loading");
+            Widget output = const Text(
+              "Loading",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 28),
+            );
             if (snapshot.hasData) {
               output = ListView.builder(
                 itemCount: snapshot.data.length,

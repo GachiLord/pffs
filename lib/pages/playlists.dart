@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/util/informing.dart';
@@ -33,57 +35,96 @@ class _PlaylistsState extends State<Playlists> {
                           .then((info) => items.then((value) {
                                 setState(() => value.add(info));
                               }))
-                          .catchError((_) =>
-                              showToast(context, "Name exists or invalid"));
+                          .catchError((_) {
+                        showToast(context, "Name exists or invalid");
+                      });
                     });
                   },
                   child: const Icon(Icons.add),
                 ),
-                body: ListView.builder(
-                  itemCount: snapshot.data.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                        title: Text(snapshot.data[index].name),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => Playlist(
-                                    info: snapshot.data[index],
-                                    libraryPath: widget.path!)),
-                          );
-                        },
-                        trailing: PopupMenuButton<String>(
-                          itemBuilder: (BuildContext context) =>
-                              <PopupMenuEntry<String>>[
-                            PopupMenuItem<String>(
-                              value: snapshot.data[index].fullPath,
-                              child: const Text("Delete"),
-                              onTap: () {
-                                showPrompt(context,
-                                    'Delete "${snapshot.data[index].name}"?',
-                                    (ok) {
-                                  if (ok) {
-                                    deleteEntity(snapshot.data[index].fullPath)
-                                        .then((_) {
-                                      setState(() {
-                                        items.then(
-                                            (value) => value.removeAt(index));
-                                      });
-                                    }).catchError((_) => showToast(context,
-                                            "Failed to delete the playlist"));
-                                  }
-                                });
-                              },
+                body: GridView.count(
+                  primary: false,
+                  padding: const EdgeInsets.all(20),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  crossAxisCount: Platform.isAndroid ? 2 : 3,
+                  children: snapshot.data
+                      .map<Widget>((playlist) => RawMaterialButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Playlist(
+                                        info: playlist,
+                                        libraryPath: widget.path!)),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: GridTile(
+                                footer: Material(
+                                  color: Colors.transparent,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(4)),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: GridTileBar(
+                                    backgroundColor: Colors.black45,
+                                    title: Text(playlist.name),
+                                    trailing: PopupMenuButton<String>(
+                                        icon: const Icon(Icons.menu),
+                                        itemBuilder: (BuildContext context) =>
+                                            <PopupMenuEntry<String>>[
+                                              PopupMenuItem<String>(
+                                                value: playlist.fullPath,
+                                                child: const Text("Delete"),
+                                                onTap: () {
+                                                  showPrompt(context,
+                                                      'Delete "${playlist.name}"?',
+                                                      (ok) {
+                                                    if (ok) {
+                                                      deleteEntity(
+                                                              playlist.fullPath)
+                                                          .then((_) {
+                                                        setState(() {
+                                                          items.then((value) =>
+                                                              value.remove(
+                                                                  playlist));
+                                                        });
+                                                      }).catchError((_) {
+                                                        showToast(context,
+                                                            "Failed to delete the playlist");
+                                                      });
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            ]),
+                                  ),
+                                ),
+                                child: playlist.artUri != null
+                                    ? Image.file(File.fromUri(playlist.artUri),
+                                        fit: BoxFit.cover)
+                                    : Container(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondaryContainer,
+                                        child: const Icon(
+                                          Icons.music_note_outlined,
+                                          size: 80,
+                                        ),
+                                      ),
+                              ),
                             ),
-                          ],
-                        ));
-                  },
+                          ) as Widget)
+                      .toList(),
                 ));
           } else if (snapshot.hasError) {
             output = const Center(
               child: Text(
                 "Incorrect path or insufficient permissions",
+                textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 28),
               ),
             );
