@@ -38,6 +38,8 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                           borderRadius: BorderRadius.circular(7)),
                       clipBehavior: Clip.antiAlias,
                       child: Image.file(
+ 			isAntiAlias: true,
+			filterQuality: FilterQuality.medium,
                         File.fromUri(state.currentArtUriSync!),
 			fit: BoxFit.cover,
                         width: 45,
