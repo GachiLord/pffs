@@ -37,7 +37,7 @@ although there are some bugs with effects functionality on Android.
 1. Run "pffs" inside this folder or add it to your PATH
 
 ### Android
-1. Download android-***.apk
+1. Download pffs-***.apk
 1. Install it
 1. Run "pffs"
 
