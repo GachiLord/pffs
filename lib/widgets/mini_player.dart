@@ -39,8 +39,9 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                       clipBehavior: Clip.antiAlias,
                       child: Image.file(
                         File.fromUri(state.currentArtUriSync!),
-                        width: 60,
-                        height: 40,
+			fit: BoxFit.cover,
+                        width: 45,
+                        height: 35,
                       ),
                     ),
                     Flexible(
