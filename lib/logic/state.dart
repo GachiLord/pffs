@@ -252,6 +252,7 @@ class PlayerState extends ChangeNotifier {
     _currentSequnce = null;
     _currentSource = null;
     _playingObject = PlayingObject.nothing;
+    _updateArtImage();
   }
 
   void addToPlaylist(
