@@ -352,7 +352,7 @@ class PlayerState extends ChangeNotifier {
       // if next track has volume conf
       // set _currentVolume to its startVolume
       var d = _player.duration ?? const Duration(seconds: 400);
-      if (pos >= (d - const Duration(seconds: 1))) {
+      if (pos >= (d - const Duration(seconds: 1)) && _currentPlaylist != null) {
         var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
         if (_currentPlaylist != null && nextVolume.isActive) {
           _currentVolume = nextVolume.startVolume;
