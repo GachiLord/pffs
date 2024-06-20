@@ -21,9 +21,10 @@ Future<PlaylistConf> load(String path) async {
 }
 
 Future<List<MediaInfo>> listPlaylists(String? libraryPath) async {
-  List<MediaInfo> items = List.empty(growable: true);
   var directory = Directory(libraryPath!);
+  List<MediaInfo> items = List.empty(growable: true);
 
+  // load media items
   await for (var entity in directory.list()) {
     var fullPath = entity.path;
     var fileName = p.basename(fullPath);
@@ -68,7 +69,13 @@ Future<List<MediaInfo>> listTracks(String? libraryPath) async {
     "amr"
   ];
   var directory = Directory(libraryPath!);
-  await for (var entity in directory.list(recursive: true)) {
+  // sort track files by date
+  List<FileSystemEntity> entities =
+      await directory.list(recursive: true).toList();
+  entities.sort((a, b) => b.statSync().changed.compareTo(a.statSync().changed));
+
+  // get mediainfo
+  for (var entity in entities) {
     var fullPath = entity.path;
     var fileName = p.basename(fullPath);
     if (musicFiles.contains(p.extension(fullPath).toLowerCase())) {
@@ -101,7 +108,6 @@ Future<MediaInfo> createPlaylist(
 
 Future<void> setTrackIndexPlaylist(
     String playlistFullPath, int oldIndex, int newIndex) async {
-  // TODO: sync global state
   var playlist = await load(playlistFullPath);
   var track = playlist.tracks.removeAt(oldIndex);
   playlist.tracks.insert(newIndex, track);
@@ -110,14 +116,12 @@ Future<void> setTrackIndexPlaylist(
 
 Future<void> setTrackPlaylist(
     String playlistFullPath, int index, TrackConf conf) async {
-  // TODO: sync global state
   var playlist = await load(playlistFullPath);
   playlist.tracks[index] = conf;
   await save(playlistFullPath, playlist);
 }
 
 Future<void> addToPlaylist(String playlistFullPath, MediaInfo trackInfo) async {
-  // TODO: addition of track to global state
   var playlist = await load(playlistFullPath);
   playlist.tracks.add(TrackConf(
       relativePath: trackInfo.relativePath,
@@ -128,7 +132,6 @@ Future<void> addToPlaylist(String playlistFullPath, MediaInfo trackInfo) async {
 }
 
 Future<void> deleteFromPlaylist(String playlistFullPath, int index) async {
-  // TODO: addition of track to global state
   var playlist = await load(playlistFullPath);
   playlist.tracks.removeAt(index);
   await save(playlistFullPath, playlist);

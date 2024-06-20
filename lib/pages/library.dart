@@ -70,6 +70,7 @@ class _LibraryState extends State<Library> {
                 },
               );
             } else if (snapshot.hasError) {
+              print(snapshot.error);
               output = const Center(
                 child: Text(
                   "Incorrect path or insufficient permissions",
