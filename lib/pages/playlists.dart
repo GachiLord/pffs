@@ -121,6 +121,7 @@ class _PlaylistsState extends State<Playlists> {
                       .toList(),
                 ));
           } else if (snapshot.hasError) {
+            print(snapshot.error);
             output = const Center(
               child: Text(
                 "Incorrect path or insufficient permissions",
