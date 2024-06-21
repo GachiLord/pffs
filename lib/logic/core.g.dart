@@ -19,14 +19,12 @@ Map<String, dynamic> _$PlaylistConfToJson(PlaylistConf instance) =>
 
 TrackConf _$TrackConfFromJson(Map<String, dynamic> json) => TrackConf(
       relativePath: json['relativePath'] as String,
-      name: json['name'] as String,
       volume: VolumeConf.fromJson(json['volume'] as Map<String, dynamic>),
       skip: SkipConf.fromJson(json['skip'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$TrackConfToJson(TrackConf instance) => <String, dynamic>{
       'relativePath': instance.relativePath,
-      'name': instance.name,
       'volume': instance.volume,
       'skip': instance.skip,
     };

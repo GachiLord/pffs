@@ -47,7 +47,8 @@ Future<List<MediaInfo>> listPlaylistTracks(
   for (var track in tracks.tracks) {
     var trackPath = p.join(libraryPath, track.relativePath);
     var artUri = await getMediaArtUri(trackPath);
-    items.add(MediaInfo(artUri, track.relativePath, trackPath, track.name));
+    items.add(MediaInfo(artUri, track.relativePath, trackPath,
+        p.basenameWithoutExtension(track.relativePath)));
   }
 
   return items;
@@ -125,7 +126,6 @@ Future<void> addToPlaylist(String playlistFullPath, MediaInfo trackInfo) async {
   var playlist = await load(playlistFullPath);
   playlist.tracks.add(TrackConf(
       relativePath: trackInfo.relativePath,
-      name: trackInfo.name,
       volume: VolumeConf.defaultConf(),
       skip: SkipConf.defaultConf()));
   await save(playlistFullPath, playlist);

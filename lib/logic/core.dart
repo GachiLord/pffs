@@ -22,19 +22,15 @@ class PlaylistConf {
 @JsonSerializable()
 class TrackConf {
   final String relativePath;
-  final String name;
   VolumeConf volume;
   SkipConf skip;
 
   TrackConf(
-      {required this.relativePath,
-      required this.name,
-      required this.volume,
-      required this.skip});
+      {required this.relativePath, required this.volume, required this.skip});
 
   MediaInfo getMediaInfo(String libraryPath) {
-    return MediaInfo(
-        null, relativePath, p.join(libraryPath, relativePath), name);
+    return MediaInfo(null, relativePath, p.join(libraryPath, relativePath),
+        p.basenameWithoutExtension(relativePath));
   }
 
   /// Connect the generated [_$TrackConfFromJson] function to the `fromJson`
