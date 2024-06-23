@@ -56,6 +56,8 @@ class PlayerState extends ChangeNotifier {
   Duration _latestPos = Duration.zero;
   Uri? _currentArtUri;
 
+  int? get currentIndex => _player.currentIndex;
+
   MediaInfo? get currentTrack {
     var index = _player.currentIndex;
     if (index != null && _currentSequnce != null) {

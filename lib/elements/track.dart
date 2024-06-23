@@ -7,14 +7,12 @@ import "package:pffs/widgets/effect_modifier.dart";
 import 'package:path/path.dart' as p;
 import "package:provider/provider.dart";
 
-enum ElementOf { library, playlist }
-
 enum TrackAction { delete, addToPlaylist }
 
 class Track extends StatelessWidget {
   final String libraryPath;
   final MediaInfo trackInfo;
-  final ElementOf elementOf;
+  final PlayingObject elementOf;
   final List<MediaInfo>? libraryTracks;
   final PlaylistConf? playlistInfo;
   final String? playlistRelativePath;
@@ -36,10 +34,19 @@ class Track extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<PlayerState>(
       builder: (context, state, child) {
+        var isCurrentTrack =
+            (state.currentIndex == index && state.playingObject == elementOf);
         return ListTile(
-          title: Text(trackInfo.name),
+          title: Text(
+            trackInfo.name,
+            style: TextStyle(
+                color: isCurrentTrack
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+                fontWeight: isCurrentTrack ? FontWeight.w600 : null),
+          ),
           onTap: () {
-            if (elementOf == ElementOf.library) {
+            if (elementOf == PlayingObject.library) {
               var p = state.playingObject;
               if (p == PlayingObject.nothing || p == PlayingObject.playlist) {
                 state.playTracks(libraryTracks!, index!);
@@ -63,10 +70,7 @@ class Track extends StatelessWidget {
               }
             }
           },
-          trailing: Container(
-              margin: const EdgeInsetsDirectional.only(
-                  top: 0, bottom: 0, start: 0, end: 10),
-              child: child),
+          trailing: child,
         );
       },
       child: TrackMenu(
@@ -86,7 +90,7 @@ class TrackMenu extends StatelessWidget {
   final String libraryPath;
   final MediaInfo trackInfo;
   final Function(TrackAction)? onAction;
-  final ElementOf elementOf;
+  final PlayingObject elementOf;
   final PlaylistConf? playlistInfo;
   final String? playlistRelativePath;
   final int? playlistIndex;
@@ -116,14 +120,14 @@ class TrackMenu extends StatelessWidget {
                 itemBuilder: (BuildContext context) =>
                     <PopupMenuEntry<TrackAction>>[
                       PopupMenuItem<TrackAction>(
-                        enabled: elementOf == ElementOf.library,
+                        enabled: elementOf == PlayingObject.library,
                         value: TrackAction.addToPlaylist,
                         child: const Text("Add to playlist"),
                         onTap: () =>
                             addDialog(context, trackInfo, snapshot.data),
                       ),
                       PopupMenuItem<TrackAction>(
-                        enabled: elementOf == ElementOf.playlist,
+                        enabled: elementOf == PlayingObject.playlist,
                         child: const Text("Effects"),
                         onTap: () => showModifyDialog(
                             context,
@@ -133,7 +137,7 @@ class TrackMenu extends StatelessWidget {
                       ),
                       PopupMenuItem<TrackAction>(
                         value: TrackAction.delete,
-                        child: elementOf == ElementOf.playlist
+                        child: elementOf == PlayingObject.playlist
                             ? const Text('Delete from playlist')
                             : const Text('Delete'),
                       ),

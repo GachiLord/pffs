@@ -41,7 +41,7 @@ class _PlatlistState extends State<Playlist> {
                       playlistRelativePath: widget.info.relativePath,
                       index: index,
                       playlistInfo: snapshot.data,
-                      elementOf: ElementOf.playlist,
+                      elementOf: PlayingObject.playlist,
                       onAction: (TrackAction a) {
                         if (a == TrackAction.delete) {
                           deleteFromPlaylist(widget.info.fullPath, index)
