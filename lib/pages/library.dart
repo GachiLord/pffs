@@ -38,7 +38,7 @@ class _LibraryState extends State<Library> {
                     libraryTracks: snapshot.data,
                     libraryPath: state.libraryPath!,
                     trackInfo: snapshot.data[index],
-                    elementOf: ElementOf.library,
+                    elementOf: PlayingObject.library,
                     onAction: (TrackAction a) => {
                       if (a == TrackAction.delete)
                         {
