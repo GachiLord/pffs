@@ -1,3 +1,4 @@
+import "dart:io";
 import "package:flutter/material.dart";
 import "package:pffs/logic/core.dart";
 import "package:pffs/logic/state.dart";
@@ -34,8 +35,11 @@ class Track extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<PlayerState>(
       builder: (context, state, child) {
-        var isCurrentTrack =
-            (state.currentIndex == index && state.playingObject == elementOf);
+        var isCurrentTrack = (state.currentIndex == index &&
+            state.playingObject == elementOf &&
+            (state.playingObjectName ==
+                    p.basenameWithoutExtension(playlistRelativePath ?? "") ||
+                state.playingObject == PlayingObject.library));
         return ListTile(
           title: Text(
             trackInfo.name,
@@ -70,7 +74,16 @@ class Track extends StatelessWidget {
               }
             }
           },
-          trailing: child,
+          trailing: Container(
+              margin: EdgeInsetsDirectional.only(
+                  top: 0,
+                  bottom: 0,
+                  start: 0,
+                  end: (elementOf == PlayingObject.playlist &&
+                          !Platform.isAndroid)
+                      ? 10
+                      : 0),
+              child: child),
         );
       },
       child: TrackMenu(
