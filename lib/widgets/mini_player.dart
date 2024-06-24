@@ -3,6 +3,7 @@ import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
+import 'package:just_audio/just_audio.dart' show LoopMode;
 import 'dart:io';
 
 class MiniPlayerAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -27,6 +28,21 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
       // check if positions are not zeros
       if (currentPos < 0) currentPos = 0;
       if (currentMax < 0) currentMax = 0;
+      // primary colour
+      final primaryColour = Theme.of(context).colorScheme.primary;
+      // loopMode icon
+      Widget loopModeIcon;
+      if (state.loopMode == LoopMode.one) {
+        loopModeIcon = Badge(
+          backgroundColor: primaryColour,
+          label: const Text('1'),
+          child: const Icon(Icons.loop),
+        );
+      } else if (state.loopMode == LoopMode.all) {
+        loopModeIcon = Icon(Icons.loop, color: primaryColour);
+      } else {
+        loopModeIcon = const Icon(Icons.loop);
+      }
       // actions
       var mobileActions = [
         IconButton(
@@ -63,6 +79,18 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                   onChanged: (v) => state.setVolume(v), initial: state.volume),
             ),
             child: const Icon(Icons.volume_up)),
+        IconButton(
+            onPressed: () {
+              state.changeShuffleMode();
+            },
+            icon: const Icon(Icons.shuffle),
+            color: state.shuffleOrder ? primaryColour : null),
+        IconButton(
+          onPressed: () {
+            state.changeLoopMode();
+          },
+          icon: loopModeIcon,
+        ),
         IconButton(
             onPressed: () {
               state.playPrevious();

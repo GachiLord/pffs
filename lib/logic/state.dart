@@ -34,6 +34,7 @@ class PlayerState extends ChangeNotifier {
   List<MediaInfo>? _currentSequnce;
   ConcatenatingAudioSource? _currentSource;
   late double _maxVolume;
+  late String? _libraryPath;
   double _currentVolume = 1.0;
 
   /// should not be modified in this class, because it is a ref to ui state
@@ -44,6 +45,7 @@ class PlayerState extends ChangeNotifier {
   PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
     _prefs = prefs;
+    _libraryPath = _prefs.getString("libraryPath");
     _maxVolume = prefs.getDouble("volume") ?? 1.0;
     _player.setVolume(_maxVolume);
     _sequenceObserver();
@@ -55,6 +57,7 @@ class PlayerState extends ChangeNotifier {
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
   Uri? _currentArtUri;
+  bool _isShuffled = false;
 
   int? get currentIndex => _player.currentIndex;
 
@@ -85,6 +88,8 @@ class PlayerState extends ChangeNotifier {
     return _currentArtUri;
   }
 
+  LoopMode get loopMode => _player.loopMode;
+  bool get shuffleOrder => _isShuffled;
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
   String? get playingObjectName => _playingObjectName;
@@ -126,6 +131,50 @@ class PlayerState extends ChangeNotifier {
     super.dispose();
   }
 
+  void changeShuffleMode() {
+    _isShuffled = !_isShuffled;
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _currentPlaylist!.shuffled = _isShuffled;
+      // update playlist file
+      var path =
+          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
+      save(path, _currentPlaylist!);
+    }
+  }
+
+  void changeLoopMode() {
+    if (_player.playing == false) {
+      _player.stop();
+    }
+    // update in player
+    switch (_player.loopMode) {
+      case LoopMode.off:
+        {
+          _player.setLoopMode(LoopMode.all);
+          break;
+        }
+      case LoopMode.all:
+        {
+          _player.setLoopMode(LoopMode.one);
+          break;
+        }
+      case LoopMode.one:
+        {
+          _player.setLoopMode(LoopMode.off);
+          break;
+        }
+    }
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _currentPlaylist!.loopMode = _player.loopMode;
+      // update playlist file
+      var path =
+          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
+      save(path, _currentPlaylist!);
+    }
+  }
+
   void setPos(int ms) {
     _player.seek(Duration(milliseconds: ms));
   }
@@ -148,12 +197,33 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
+  final Random _random = Random();
+
+  void _playRandom() {
+    final prev = _player.currentIndex;
+    var cur = _random.nextInt(_currentSequnce?.length ?? 0);
+
+    while (prev == cur && (_currentSequnce?.length ?? 0) > 1) {
+      cur = _random.nextInt(_currentSequnce?.length ?? 0);
+    }
+    _player.seek(Duration.zero, index: cur);
+  }
+
   void playNext() {
-    _player.seekToNext();
+    if (_isShuffled) {
+      _playRandom();
+    } else {
+      _player.play();
+      _player.seekToNext();
+    }
   }
 
   void playPrevious() {
-    _player.seekToPrevious();
+    if (_isShuffled) {
+      _playRandom();
+    } else {
+      _player.seekToPrevious();
+    }
   }
 
   void playTracks(List<MediaInfo> tracks, int startIndex) async {
@@ -196,6 +266,7 @@ class PlayerState extends ChangeNotifier {
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
     _playingObjectName = playlistName;
+    _isShuffled = playlist.shuffled ?? false;
 
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < _currentSequnce!.length; i++) {
@@ -226,7 +297,7 @@ class PlayerState extends ChangeNotifier {
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
-    _player.setLoopMode(LoopMode.all);
+    _player.setLoopMode(playlist.loopMode ?? LoopMode.all);
     _player.play();
     // update art image cache
     _updateArtImage();
@@ -351,10 +422,12 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _positionObserver() async {
     void setVolumeForNext() {
-      var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
-      if (_currentPlaylist != null && nextVolume.isActive) {
-        _currentVolume = nextVolume.startVolume;
-        _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+      if (_player.nextIndex != null) {
+        var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
+        if (_currentPlaylist != null && nextVolume.isActive) {
+          _currentVolume = nextVolume.startVolume;
+          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+        }
       }
     }
 
@@ -362,11 +435,16 @@ class PlayerState extends ChangeNotifier {
       // if next track has volume conf
       // set _currentVolume to its startVolume
       var d = _player.duration ?? const Duration(seconds: 400);
-      if (pos >= (d - const Duration(seconds: 1)) && _currentPlaylist != null) {
+      if (pos >= (d - const Duration(seconds: 1)) &&
+          _currentPlaylist != null &&
+          _player.currentIndex != null &&
+          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
         setVolumeForNext();
       }
       // apply skip effect
-      if (_currentPlaylist != null) {
+      if (_currentPlaylist != null &&
+          _player.currentIndex != null &&
+          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
         var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
         if (skip.isActive) {
           var start = Duration(seconds: skip.start);
@@ -378,7 +456,7 @@ class PlayerState extends ChangeNotifier {
             setVolumeForNext();
           }
           if (pos > end) {
-            _player.seekToNext();
+            playNext();
           }
         }
       }
