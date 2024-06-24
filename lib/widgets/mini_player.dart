@@ -27,6 +27,53 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
       // check if positions are not zeros
       if (currentPos < 0) currentPos = 0;
       if (currentMax < 0) currentMax = 0;
+      // actions
+      var mobileActions = [
+        IconButton(
+            onPressed: () {
+              state.playPrevious();
+            },
+            icon: const Icon(Icons.skip_previous)),
+        IconButton(
+            onPressed: () {
+              state.playPause();
+            },
+            icon: state.playing
+                ? const Icon(Icons.pause)
+                : const Icon(Icons.play_arrow)),
+        IconButton(
+            onPressed: () {
+              state.playNext();
+            },
+            icon: const Icon(Icons.skip_next)),
+      ];
+      var desktopActions = [
+        CustomPopup(
+            content: SizedBox(
+              width: 300,
+              height: 30,
+              child: VolumePicker(
+                  onChanged: (v) => state.setVolume(v), initial: state.volume),
+            ),
+            child: const Icon(Icons.volume_up)),
+        IconButton(
+            onPressed: () {
+              state.playPrevious();
+            },
+            icon: const Icon(Icons.skip_previous)),
+        IconButton(
+            onPressed: () {
+              state.playPause();
+            },
+            icon: state.playing
+                ? const Icon(Icons.pause)
+                : const Icon(Icons.play_arrow)),
+        IconButton(
+            onPressed: () {
+              state.playNext();
+            },
+            icon: const Icon(Icons.skip_next)),
+      ];
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
@@ -60,56 +107,40 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                   state.trackName ?? "",
                   overflow: TextOverflow.fade,
                 ),
-          actions: [
-            CustomPopup(
-                content: SizedBox(
-                  width: 300,
-                  height: 30,
-                  child: VolumePicker(
-                      onChanged: (v) => state.setVolume(v),
-                      initial: state.volume),
-                ),
-                child: const Icon(Icons.volume_up)),
-            IconButton(
-                onPressed: () {
-                  state.playPrevious();
-                },
-                icon: const Icon(Icons.skip_previous)),
-            IconButton(
-                onPressed: () {
-                  state.playPause();
-                },
-                icon: state.playing
-                    ? const Icon(Icons.pause)
-                    : const Icon(Icons.play_arrow)),
-            IconButton(
-                onPressed: () {
-                  state.playNext();
-                },
-                icon: const Icon(Icons.skip_next)),
-          ],
+          actions: Platform.isAndroid ? mobileActions : desktopActions,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
             child: SizedBox(
-              height: 15,
+              height: Platform.isAndroid ? 1 : 5,
               child: SliderTheme(
-                  data: SliderThemeData(trackShape: CustomTrackShape()),
+                  data: SliderThemeData(
+                    trackHeight: Platform.isAndroid ? 4 : 8,
+                    trackShape: CustomTrackShape(),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 8),
+                    thumbShape: RoundSliderThumbShape(
+                      enabledThumbRadius: Platform.isAndroid ? 1 : 7,
+                    ),
+                  ),
                   child: Slider(
                     min: 0,
                     max: currentMax,
                     value: currentPos,
                     onChangeStart: (v) {
+                      if (Platform.isAndroid) return;
                       state.playPause();
                       setState(() {
                         pos = v;
                       });
                     },
                     onChanged: (v) {
+                      if (Platform.isAndroid) return;
                       setState(() {
                         pos = v;
                       });
                     },
                     onChangeEnd: (v) {
+                      if (Platform.isAndroid) return;
                       state.setPos(v.toInt());
                       setState(() {
                         pos = null;
@@ -123,7 +154,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
   }
 }
 
-class CustomTrackShape extends RoundedRectSliderTrackShape {
+class CustomTrackShape extends RectangularSliderTrackShape {
   @override
   Rect getPreferredRect({
     required RenderBox parentBox,
@@ -133,9 +164,9 @@ class CustomTrackShape extends RoundedRectSliderTrackShape {
     bool isDiscrete = false,
   }) {
     final trackHeight = sliderTheme.trackHeight;
-    final trackLeft = offset.dx + 20;
+    final trackLeft = offset.dx;
     final trackTop = offset.dy + (parentBox.size.height - trackHeight!) / 2;
-    final trackWidth = parentBox.size.width - 40;
+    final trackWidth = parentBox.size.width;
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 }

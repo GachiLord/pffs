@@ -17,6 +17,26 @@ class Playlists extends StatefulWidget {
 
 class _PlaylistsState extends State<Playlists> {
   late final Future<List<MediaInfo>> items = listPlaylists(widget.path);
+  late bool _isVisible;
+  late ScrollController _hideButtonController;
+
+  @override
+  initState() {
+    super.initState();
+    _isVisible = true;
+    _hideButtonController = ScrollController();
+    _hideButtonController.addListener(() {
+      var prev = _isVisible;
+      var cur = _hideButtonController.position.pixels !=
+          _hideButtonController.position.maxScrollExtent;
+
+      if (prev != cur) {
+        setState(() {
+          _isVisible = cur;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,22 +47,25 @@ class _PlaylistsState extends State<Playlists> {
           Widget output = const Text("loading");
           if (snapshot.hasData) {
             output = Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  onPressed: () {
-                    showTextDialog(context, "Create a playlist", (name) {
-                      createPlaylist(
-                              widget.path!, name, PlaylistConf(tracks: []))
-                          .then((info) => items.then((value) {
-                                setState(() => value.add(info));
-                              }))
-                          .catchError((_) {
-                        showToast(context, "Name exists or invalid");
-                      });
-                    });
-                  },
-                  child: const Icon(Icons.add),
-                ),
+                floatingActionButton: _isVisible
+                    ? FloatingActionButton(
+                        onPressed: () {
+                          showTextDialog(context, "Create a playlist", (name) {
+                            createPlaylist(widget.path!, name,
+                                    PlaylistConf(tracks: []))
+                                .then((info) => items.then((value) {
+                                      setState(() => value.add(info));
+                                    }))
+                                .catchError((_) {
+                              showToast(context, "Name exists or invalid");
+                            });
+                          });
+                        },
+                        child: const Icon(Icons.add),
+                      )
+                    : null,
                 body: GridView.count(
+                  controller: _hideButtonController,
                   primary: false,
                   padding: const EdgeInsets.all(20),
                   crossAxisSpacing: 10,

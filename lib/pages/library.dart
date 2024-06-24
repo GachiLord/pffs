@@ -17,6 +17,28 @@ class Library extends StatefulWidget {
 
 class _LibraryState extends State<Library> {
   late final List<MediaInfo> items = [];
+
+  late bool _isVisible;
+  late ScrollController _hideButtonController;
+
+  @override
+  initState() {
+    super.initState();
+    _isVisible = true;
+    _hideButtonController = ScrollController();
+    _hideButtonController.addListener(() {
+      var prev = _isVisible;
+      var cur = _hideButtonController.position.pixels !=
+          _hideButtonController.position.maxScrollExtent;
+
+      if (prev != cur) {
+        setState(() {
+          _isVisible = cur;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LibraryState>(builder: (context, state, child) {
@@ -31,6 +53,7 @@ class _LibraryState extends State<Library> {
             );
             if (snapshot.hasData) {
               output = ListView.builder(
+                controller: _hideButtonController,
                 itemCount: snapshot.data.length,
                 itemBuilder: (context, index) {
                   return Track(
@@ -80,46 +103,50 @@ class _LibraryState extends State<Library> {
               );
             }
             return Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  onPressed: () {
-                    void pathDialog(Directory dir) {
-                      FilesystemPicker.open(
-                        title: 'Choose library path',
-                        context: context,
-                        rootDirectory: dir,
-                        fsType: FilesystemType.folder,
-                      ).then((dir) {
-                        if (dir != null) state.setLibraryPath(dir);
-                      });
-                    }
+                floatingActionButton: _isVisible
+                    ? FloatingActionButton(
+                        onPressed: () {
+                          void pathDialog(Directory dir) {
+                            FilesystemPicker.open(
+                              title: 'Choose library path',
+                              context: context,
+                              rootDirectory: dir,
+                              fsType: FilesystemType.folder,
+                            ).then((dir) {
+                              if (dir != null) state.setLibraryPath(dir);
+                            });
+                          }
 
-                    void setLibraryPath(Directory dir) {
-                      dir.exists().then((value) {
-                        if (value && !Platform.isWindows) {
-                          pathDialog(dir);
-                        } else {
-                          showTextDialog(
-                              context,
-                              "Failed to invoke directory picker. Input library path manually",
-                              (v) => state.setLibraryPath(v));
-                        }
-                      });
-                    }
+                          void setLibraryPath(Directory dir) {
+                            dir.exists().then((value) {
+                              if (value && !Platform.isWindows) {
+                                pathDialog(dir);
+                              } else {
+                                showTextDialog(
+                                    context,
+                                    "Failed to invoke directory picker. Input library path manually",
+                                    (v) => state.setLibraryPath(v));
+                              }
+                            });
+                          }
 
-                    if (Platform.isAndroid) {
-                      Permission.manageExternalStorage.request().then((r) {
-                        setLibraryPath(Directory("/storage/emulated/0/"));
-                      });
-                    }
-                    if (Platform.isLinux) {
-                      setLibraryPath(Directory("/"));
-                    }
-                    if (Platform.isWindows) {
-                      setLibraryPath(Directory("con"));
-                    }
-                  },
-                  child: const Icon(Icons.folder),
-                ),
+                          if (Platform.isAndroid) {
+                            Permission.manageExternalStorage
+                                .request()
+                                .then((r) {
+                              setLibraryPath(Directory("/storage/emulated/0/"));
+                            });
+                          }
+                          if (Platform.isLinux) {
+                            setLibraryPath(Directory("/"));
+                          }
+                          if (Platform.isWindows) {
+                            setLibraryPath(Directory("con"));
+                          }
+                        },
+                        child: const Icon(Icons.folder),
+                      )
+                    : null,
                 body: output);
           });
     });
