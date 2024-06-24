@@ -350,15 +350,36 @@ class PlayerState extends ChangeNotifier {
 
   /// Should be called only once
   void _positionObserver() async {
+    void setVolumeForNext() {
+      var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
+      if (_currentPlaylist != null && nextVolume.isActive) {
+        _currentVolume = nextVolume.startVolume;
+        _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+      }
+    }
+
     await for (final pos in _player.positionStream) {
       // if next track has volume conf
       // set _currentVolume to its startVolume
       var d = _player.duration ?? const Duration(seconds: 400);
       if (pos >= (d - const Duration(seconds: 1)) && _currentPlaylist != null) {
-        var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
-        if (_currentPlaylist != null && nextVolume.isActive) {
-          _currentVolume = nextVolume.startVolume;
-          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+        setVolumeForNext();
+      }
+      // apply skip effect
+      if (_currentPlaylist != null) {
+        var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
+        if (skip.isActive) {
+          var start = Duration(seconds: skip.start);
+          if (pos < start) {
+            _player.seek(start);
+          }
+          var end = Duration(seconds: skip.end);
+          if (pos >= (end - const Duration(seconds: 1))) {
+            setVolumeForNext();
+          }
+          if (pos > end) {
+            _player.seekToNext();
+          }
         }
       }
       notifyListeners();
