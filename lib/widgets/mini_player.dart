@@ -65,6 +65,14 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             child: const Icon(Icons.volume_up)),
         IconButton(
             onPressed: () {
+              state.changeShuffleMode();
+            },
+            icon: const Icon(Icons.shuffle),
+            color: state.shuffleOrder
+                ? Theme.of(context).colorScheme.primary
+                : null),
+        IconButton(
+            onPressed: () {
               state.playPrevious();
             },
             icon: const Icon(Icons.skip_previous)),

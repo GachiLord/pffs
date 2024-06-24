@@ -55,6 +55,7 @@ class PlayerState extends ChangeNotifier {
   Duration? _latestDuration = Duration.zero;
   Duration _latestPos = Duration.zero;
   Uri? _currentArtUri;
+  bool _isShuffled = false;
 
   int? get currentIndex => _player.currentIndex;
 
@@ -85,6 +86,7 @@ class PlayerState extends ChangeNotifier {
     return _currentArtUri;
   }
 
+  bool get shuffleOrder => _isShuffled;
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
   String? get playingObjectName => _playingObjectName;
@@ -126,6 +128,10 @@ class PlayerState extends ChangeNotifier {
     super.dispose();
   }
 
+  void changeShuffleMode() {
+    _isShuffled = !_isShuffled;
+  }
+
   void setPos(int ms) {
     _player.seek(Duration(milliseconds: ms));
   }
@@ -148,12 +154,33 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
+  final Random _random = Random();
+
+  void _playRandom() {
+    final prev = _player.currentIndex;
+    var cur = _random.nextInt(_currentSequnce?.length ?? 0);
+
+    while (prev == cur && (_currentSequnce?.length ?? 0) > 1) {
+      print("1234");
+      cur = _random.nextInt(_currentSequnce?.length ?? 0);
+    }
+    _player.seek(Duration.zero, index: cur);
+  }
+
   void playNext() {
-    _player.seekToNext();
+    if (_isShuffled) {
+      _playRandom();
+    } else {
+      _player.seekToNext();
+    }
   }
 
   void playPrevious() {
-    _player.seekToPrevious();
+    if (_isShuffled) {
+      _playRandom();
+    } else {
+      _player.seekToPrevious();
+    }
   }
 
   void playTracks(List<MediaInfo> tracks, int startIndex) async {
@@ -362,11 +389,13 @@ class PlayerState extends ChangeNotifier {
       // if next track has volume conf
       // set _currentVolume to its startVolume
       var d = _player.duration ?? const Duration(seconds: 400);
-      if (pos >= (d - const Duration(seconds: 1)) && _currentPlaylist != null) {
+      if (pos >= (d - const Duration(seconds: 1)) &&
+          _currentPlaylist != null &&
+          _player.currentIndex != null) {
         setVolumeForNext();
       }
       // apply skip effect
-      if (_currentPlaylist != null) {
+      if (_currentPlaylist != null && _player.currentIndex != null) {
         var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
         if (skip.isActive) {
           var start = Duration(seconds: skip.start);
@@ -378,7 +407,7 @@ class PlayerState extends ChangeNotifier {
             setVolumeForNext();
           }
           if (pos > end) {
-            _player.seekToNext();
+            playNext();
           }
         }
       }
