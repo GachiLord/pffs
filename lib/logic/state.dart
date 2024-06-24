@@ -34,6 +34,7 @@ class PlayerState extends ChangeNotifier {
   List<MediaInfo>? _currentSequnce;
   ConcatenatingAudioSource? _currentSource;
   late double _maxVolume;
+  late String? _libraryPath;
   double _currentVolume = 1.0;
 
   /// should not be modified in this class, because it is a ref to ui state
@@ -44,6 +45,7 @@ class PlayerState extends ChangeNotifier {
   PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
     _prefs = prefs;
+    _libraryPath = _prefs.getString("libraryPath");
     _maxVolume = prefs.getDouble("volume") ?? 1.0;
     _player.setVolume(_maxVolume);
     _sequenceObserver();
@@ -131,12 +133,21 @@ class PlayerState extends ChangeNotifier {
 
   void changeShuffleMode() {
     _isShuffled = !_isShuffled;
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _currentPlaylist!.shuffled = _isShuffled;
+      // update playlist file
+      var path =
+          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
+      save(path, _currentPlaylist!);
+    }
   }
 
   void changeLoopMode() {
     if (_player.playing == false) {
       _player.stop();
     }
+    // update in player
     switch (_player.loopMode) {
       case LoopMode.off:
         {
@@ -153,6 +164,14 @@ class PlayerState extends ChangeNotifier {
           _player.setLoopMode(LoopMode.off);
           break;
         }
+    }
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _currentPlaylist!.loopMode = _player.loopMode;
+      // update playlist file
+      var path =
+          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
+      save(path, _currentPlaylist!);
     }
   }
 
@@ -247,6 +266,7 @@ class PlayerState extends ChangeNotifier {
     _currentPlaylist = playlist;
     _playingObject = PlayingObject.playlist;
     _playingObjectName = playlistName;
+    _isShuffled = playlist.shuffled ?? false;
 
     List<AudioSource> children = List.empty(growable: true);
     for (var i = 0; i < _currentSequnce!.length; i++) {
@@ -277,7 +297,7 @@ class PlayerState extends ChangeNotifier {
     );
     _currentSource = source;
     _player.setAudioSource(source, initialIndex: startIndex);
-    _player.setLoopMode(LoopMode.all);
+    _player.setLoopMode(playlist.loopMode ?? LoopMode.all);
     _player.play();
     // update art image cache
     _updateArtImage();
