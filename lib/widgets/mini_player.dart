@@ -48,6 +48,13 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             icon: const Icon(Icons.skip_next)),
       ];
       var desktopActions = [
+        Container(
+          margin: const EdgeInsets.only(right: 10),
+          child: Text(
+            state.pos.toString().split(".")[0].replaceFirst("0:", ""),
+            style: const TextStyle(fontSize: 16),
+          ),
+        ),
         CustomPopup(
             content: SizedBox(
               width: 300,
