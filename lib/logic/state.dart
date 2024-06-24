@@ -86,6 +86,7 @@ class PlayerState extends ChangeNotifier {
     return _currentArtUri;
   }
 
+  LoopMode get loopMode => _player.loopMode;
   bool get shuffleOrder => _isShuffled;
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
   PlayingObject get playingObject => _playingObject;
@@ -132,6 +133,29 @@ class PlayerState extends ChangeNotifier {
     _isShuffled = !_isShuffled;
   }
 
+  void changeLoopMode() {
+    if (_player.playing == false) {
+      _player.stop();
+    }
+    switch (_player.loopMode) {
+      case LoopMode.off:
+        {
+          _player.setLoopMode(LoopMode.all);
+          break;
+        }
+      case LoopMode.all:
+        {
+          _player.setLoopMode(LoopMode.one);
+          break;
+        }
+      case LoopMode.one:
+        {
+          _player.setLoopMode(LoopMode.off);
+          break;
+        }
+    }
+  }
+
   void setPos(int ms) {
     _player.seek(Duration(milliseconds: ms));
   }
@@ -161,7 +185,6 @@ class PlayerState extends ChangeNotifier {
     var cur = _random.nextInt(_currentSequnce?.length ?? 0);
 
     while (prev == cur && (_currentSequnce?.length ?? 0) > 1) {
-      print("1234");
       cur = _random.nextInt(_currentSequnce?.length ?? 0);
     }
     _player.seek(Duration.zero, index: cur);
@@ -171,6 +194,7 @@ class PlayerState extends ChangeNotifier {
     if (_isShuffled) {
       _playRandom();
     } else {
+      _player.play();
       _player.seekToNext();
     }
   }
@@ -378,10 +402,12 @@ class PlayerState extends ChangeNotifier {
   /// Should be called only once
   void _positionObserver() async {
     void setVolumeForNext() {
-      var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
-      if (_currentPlaylist != null && nextVolume.isActive) {
-        _currentVolume = nextVolume.startVolume;
-        _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+      if (_player.nextIndex != null) {
+        var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
+        if (_currentPlaylist != null && nextVolume.isActive) {
+          _currentVolume = nextVolume.startVolume;
+          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+        }
       }
     }
 
@@ -391,11 +417,14 @@ class PlayerState extends ChangeNotifier {
       var d = _player.duration ?? const Duration(seconds: 400);
       if (pos >= (d - const Duration(seconds: 1)) &&
           _currentPlaylist != null &&
-          _player.currentIndex != null) {
+          _player.currentIndex != null &&
+          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
         setVolumeForNext();
       }
       // apply skip effect
-      if (_currentPlaylist != null && _player.currentIndex != null) {
+      if (_currentPlaylist != null &&
+          _player.currentIndex != null &&
+          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
         var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
         if (skip.isActive) {
           var start = Duration(seconds: skip.start);
