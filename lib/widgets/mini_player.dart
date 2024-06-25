@@ -146,7 +146,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
             child: SizedBox(
-              height: Platform.isAndroid ? 1 : 5,
+              height: Platform.isAndroid ? 1 : 9,
               child: SliderTheme(
                   data: SliderThemeData(
                     trackHeight: Platform.isAndroid ? 4 : 8,
@@ -163,7 +163,8 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                     value: currentPos,
                     onChangeStart: (v) {
                       if (Platform.isAndroid) return;
-                      state.playPause();
+                      if (state.playing) state.playPause();
+
                       setState(() {
                         pos = v;
                       });
