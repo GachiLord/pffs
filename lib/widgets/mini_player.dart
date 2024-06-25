@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
+import 'package:pffs/widgets/full_player.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
 import 'package:just_audio/just_audio.dart' show LoopMode;
@@ -112,36 +113,61 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
-          title: (state.currentArtUriSync != null && !Platform.isAndroid)
-              ? Row(
-                  children: [
-                    Material(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7)),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.file(
-                        isAntiAlias: true,
-                        filterQuality: FilterQuality.medium,
-                        File.fromUri(state.currentArtUriSync!),
-                        fit: BoxFit.cover,
-                        width: 65,
-                        height: 35,
+          title: RawMaterialButton(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadiusDirectional.circular(10)),
+            onPressed: () => Navigator.of(context).push(PageRouteBuilder(
+                pageBuilder: (context, _, __) => FullPlayer(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0.0, 1.0);
+                  const end = Offset.zero;
+                  const curve = Curves.ease;
+
+                  final tween = Tween(begin: begin, end: end);
+                  final curvedAnimation = CurvedAnimation(
+                    parent: animation,
+                    curve: curve,
+                  );
+
+                  return SlideTransition(
+                    position: tween.animate(curvedAnimation),
+                    child: child,
+                  );
+                })),
+            child: (state.currentArtUriSync != null && !Platform.isAndroid)
+                ? Row(
+                    children: [
+                      Material(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7)),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.file(
+                          isAntiAlias: true,
+                          filterQuality: FilterQuality.medium,
+                          File.fromUri(state.currentArtUriSync!),
+                          fit: BoxFit.cover,
+                          width: 65,
+                          height: 35,
+                        ),
                       ),
-                    ),
-                    Flexible(
-                        child: Container(
-                      margin: const EdgeInsets.only(left: 10),
-                      child: Text(
-                        state.trackName ?? "",
-                        overflow: TextOverflow.fade,
-                      ),
-                    ))
-                  ],
-                )
-              : Text(
-                  state.trackName ?? "",
-                  overflow: TextOverflow.fade,
-                ),
+                      Flexible(
+                          child: Container(
+                        margin: const EdgeInsets.only(left: 10),
+                        child: Text(
+                          state.trackName ?? "",
+                          style: const TextStyle(fontSize: 16),
+                          overflow: TextOverflow.fade,
+                        ),
+                      ))
+                    ],
+                  )
+                : Text(
+                    state.trackName ?? "",
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.fade,
+                  ),
+          ),
           actions: Platform.isAndroid ? mobileActions : desktopActions,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
