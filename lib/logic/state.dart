@@ -381,6 +381,21 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
+  void _speedEffect() async {
+    var index = _player.currentIndex;
+    if (_currentPlaylist != null && index != null) {
+      // apply effects
+      var track = _currentPlaylist!.tracks[index];
+      var speed = track.speed;
+
+      if (speed.isActive) {
+        _player.setSpeed(speed.speed);
+      } else {
+        _player.setSpeed(1);
+      }
+    }
+  }
+
   void _updateArtImage() async {
     var index = _player.currentIndex;
 
@@ -403,6 +418,11 @@ class PlayerState extends ChangeNotifier {
       // update art image cache
       _updateArtImage();
       // apply effects
+      Timer(
+          const Duration(
+            milliseconds: 100,
+          ),
+          () => _speedEffect());
       _soundEffect();
       // update ui
       notifyListeners();

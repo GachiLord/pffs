@@ -126,8 +126,8 @@ Future<void> addToPlaylist(String playlistFullPath, MediaInfo trackInfo) async {
   var playlist = await load(playlistFullPath);
   playlist.tracks.add(TrackConf(
       relativePath: trackInfo.relativePath,
-      volume: VolumeConf.defaultConf(),
-      skip: SkipConf.defaultConf()));
+      volume: VolumeConf(),
+      skip: SkipConf()));
   await save(playlistFullPath, playlist);
 }
 

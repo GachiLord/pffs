@@ -5,7 +5,6 @@ import 'package:pffs/util/informing.dart';
 
 void showModifyDialog(BuildContext context, PlaylistConf playlist,
     String playlistFullPath, int trackIndex) {
-  // TODO: add sync with global state
   var track = playlist.tracks[trackIndex];
   showDialog<void>(
     context: context,
@@ -74,6 +73,18 @@ void showModifyDialog(BuildContext context, PlaylistConf playlist,
                     }),
               ],
             ),
+            ListBody(
+              children: [
+                const Text("Speed",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                EnabledSwitch(
+                    initial: track.speed.isActive,
+                    onChanged: (v) => track.speed.isActive = v),
+                SpeedPicker(
+                    onChanged: (v) => track.speed.speed = v,
+                    initial: track.speed.speed)
+              ],
+            ),
           ],
         )),
         actions: <Widget>[
@@ -103,6 +114,47 @@ void showModifyDialog(BuildContext context, PlaylistConf playlist,
   );
 }
 
+class SpeedPicker extends StatefulWidget {
+  final Function(double) onChanged;
+  final double initial;
+
+  const SpeedPicker(
+      {super.key, required this.onChanged, required this.initial});
+
+  @override
+  State<SpeedPicker> createState() => _SpeedPickerState();
+}
+
+class _SpeedPickerState extends State<SpeedPicker> {
+  double value = 1;
+
+  @override
+  void initState() {
+    value = widget.initial;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Slider(
+          min: 1.0,
+          max: 2.0,
+          value: value,
+          onChanged: (v) {
+            setState(() {
+              widget.onChanged(v);
+              value = v;
+            });
+          },
+        ),
+        Text(value.toStringAsFixed(2)),
+      ],
+    );
+  }
+}
+
 class VolumePicker extends StatefulWidget {
   final Function(double) onChanged;
   final double initial;
@@ -125,16 +177,21 @@ class _VolumePickerState extends State<VolumePicker> {
 
   @override
   Widget build(BuildContext context) {
-    return Slider(
-      min: 0.0,
-      max: 1.0,
-      value: value,
-      onChanged: (v) {
-        setState(() {
-          widget.onChanged(v);
-          value = v;
-        });
-      },
+    return Row(
+      children: [
+        Slider(
+          min: 0.0,
+          max: 1.0,
+          value: value,
+          onChanged: (v) {
+            setState(() {
+              widget.onChanged(v);
+              value = v;
+            });
+          },
+        ),
+        Text(value.toStringAsFixed(2)),
+      ],
     );
   }
 }

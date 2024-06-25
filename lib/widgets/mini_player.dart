@@ -73,7 +73,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
         ),
         CustomPopup(
             content: SizedBox(
-              width: 300,
+              width: 250,
               height: 30,
               child: VolumePicker(
                   onChanged: (v) => state.setVolume(v), initial: state.volume),
