@@ -29,14 +29,22 @@ const _$LoopModeEnumMap = {
 
 TrackConf _$TrackConfFromJson(Map<String, dynamic> json) => TrackConf(
       relativePath: json['relativePath'] as String,
-      volume: VolumeConf.fromJson(json['volume'] as Map<String, dynamic>),
-      skip: SkipConf.fromJson(json['skip'] as Map<String, dynamic>),
+      volume: json['volume'] == null
+          ? null
+          : VolumeConf.fromJson(json['volume'] as Map<String, dynamic>),
+      skip: json['skip'] == null
+          ? null
+          : SkipConf.fromJson(json['skip'] as Map<String, dynamic>),
+      speed: json['speed'] == null
+          ? null
+          : SpeedConf.fromJson(json['speed'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$TrackConfToJson(TrackConf instance) => <String, dynamic>{
       'relativePath': instance.relativePath,
       'volume': instance.volume,
       'skip': instance.skip,
+      'speed': instance.speed,
     };
 
 Effect _$EffectFromJson(Map<String, dynamic> json) => Effect();
@@ -44,10 +52,11 @@ Effect _$EffectFromJson(Map<String, dynamic> json) => Effect();
 Map<String, dynamic> _$EffectToJson(Effect instance) => <String, dynamic>{};
 
 VolumeConf _$VolumeConfFromJson(Map<String, dynamic> json) => VolumeConf(
-      startVolume: (json['startVolume'] as num).toDouble(),
-      endVolume: (json['endVolume'] as num).toDouble(),
-      isActive: json['isActive'] as bool,
-      transitionTimeSeconds: (json['transitionTimeSeconds'] as num).toInt(),
+      startVolume: (json['startVolume'] as num?)?.toDouble() ?? 1,
+      endVolume: (json['endVolume'] as num?)?.toDouble() ?? 1,
+      isActive: json['isActive'] as bool? ?? false,
+      transitionTimeSeconds:
+          (json['transitionTimeSeconds'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$VolumeConfToJson(VolumeConf instance) =>
@@ -59,13 +68,23 @@ Map<String, dynamic> _$VolumeConfToJson(VolumeConf instance) =>
     };
 
 SkipConf _$SkipConfFromJson(Map<String, dynamic> json) => SkipConf(
-      start: (json['start'] as num).toInt(),
-      end: (json['end'] as num).toInt(),
-      isActive: json['isActive'] as bool,
+      start: (json['start'] as num?)?.toInt() ?? 0,
+      end: (json['end'] as num?)?.toInt() ?? 0,
+      isActive: json['isActive'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$SkipConfToJson(SkipConf instance) => <String, dynamic>{
       'isActive': instance.isActive,
       'start': instance.start,
       'end': instance.end,
+    };
+
+SpeedConf _$SpeedConfFromJson(Map<String, dynamic> json) => SpeedConf(
+      speed: (json['speed'] as num?)?.toDouble() ?? 1,
+      isActive: json['isActive'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$SpeedConfToJson(SpeedConf instance) => <String, dynamic>{
+      'isActive': instance.isActive,
+      'speed': instance.speed,
     };

@@ -15,8 +15,8 @@ App is intended to run on Android, Linux and Windows and be as simple as possibl
 
 - track volume adjustment (optional: smooth switching)
 - track ordering in a playlist
-- track speed adjustment (*not implemented)
-- skipping parts of track (*not implemented)
+- track speed adjustment
+- skipping parts of track
 
 ## Current state
 

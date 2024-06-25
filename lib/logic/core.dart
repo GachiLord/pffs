@@ -27,9 +27,16 @@ class TrackConf {
   final String relativePath;
   VolumeConf volume;
   SkipConf skip;
+  SpeedConf speed;
 
   TrackConf(
-      {required this.relativePath, required this.volume, required this.skip});
+      {required this.relativePath,
+      VolumeConf? volume,
+      SkipConf? skip,
+      SpeedConf? speed})
+      : volume = volume ?? VolumeConf(),
+        skip = skip ?? SkipConf(),
+        speed = speed ?? SpeedConf();
 
   MediaInfo getMediaInfo(String libraryPath) {
     return MediaInfo(null, relativePath, p.join(libraryPath, relativePath),
@@ -65,18 +72,10 @@ class VolumeConf extends Effect {
   int transitionTimeSeconds;
 
   VolumeConf(
-      {required this.startVolume,
-      required this.endVolume,
-      required this.isActive,
-      required this.transitionTimeSeconds});
-
-  static VolumeConf defaultConf() {
-    return VolumeConf(
-        transitionTimeSeconds: 0,
-        startVolume: 1,
-        endVolume: 1,
-        isActive: false);
-  }
+      {this.startVolume = 1,
+      this.endVolume = 1,
+      this.isActive = false,
+      this.transitionTimeSeconds = 0});
 
   /// Connect the generated [_$VolumeConfFromJson] function to the `fromJson`
   /// factory.
@@ -93,11 +92,7 @@ class SkipConf extends Effect {
   bool isActive;
   int start;
   int end;
-  SkipConf({required this.start, required this.end, required this.isActive});
-
-  static SkipConf defaultConf() {
-    return SkipConf(start: 0, end: 0, isActive: false);
-  }
+  SkipConf({this.start = 0, this.end = 0, this.isActive = false});
 
   /// Connect the generated [_$SkipConfFromJson] function to the `fromJson`
   /// factory.
@@ -107,4 +102,20 @@ class SkipConf extends Effect {
   /// Connect the generated [_$SkipConfToJson] function to the `toJson` method.
   @override
   Map<String, dynamic> toJson() => _$SkipConfToJson(this);
+}
+
+@JsonSerializable()
+class SpeedConf extends Effect {
+  bool isActive;
+  double speed;
+  SpeedConf({this.speed = 1, this.isActive = false});
+
+  /// Connect the generated [_$SpeedConfFromJson] function to the `fromJson`
+  /// factory.
+  factory SpeedConf.fromJson(Map<String, dynamic> json) =>
+      _$SpeedConfFromJson(json);
+
+  /// Connect the generated [_$SpeedConfToJson] function to the `toJson` method.
+  @override
+  Map<String, dynamic> toJson() => _$SpeedConfToJson(this);
 }
