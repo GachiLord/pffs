@@ -119,7 +119,7 @@ class PlayerState extends ChangeNotifier {
     try {
       return _currentSequnce![index!].name;
     } catch (e) {
-      print(e);
+      print("cannot get trackName: $e");
       return null;
     }
   }
@@ -304,7 +304,6 @@ class PlayerState extends ChangeNotifier {
   }
 
   void setSuqenceIndex(int index) {
-    if (Platform.isAndroid) _player.stop();
     _player.seek(null, index: index);
     _player.play();
   }
