@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
+import 'package:pffs/widgets/full_player.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
 import 'package:just_audio/just_audio.dart' show LoopMode;
@@ -36,12 +37,12 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
-          child: const Icon(Icons.loop),
+          child: const Icon(Icons.loop_rounded),
         );
       } else if (state.loopMode == LoopMode.all) {
-        loopModeIcon = Icon(Icons.loop, color: primaryColour);
+        loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
-        loopModeIcon = const Icon(Icons.loop);
+        loopModeIcon = const Icon(Icons.loop_rounded);
       }
       // actions
       var mobileActions = [
@@ -49,19 +50,19 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             onPressed: () {
               state.playPrevious();
             },
-            icon: const Icon(Icons.skip_previous)),
+            icon: const Icon(Icons.skip_previous_rounded)),
         IconButton(
             onPressed: () {
               state.playPause();
             },
             icon: state.playing
-                ? const Icon(Icons.pause)
-                : const Icon(Icons.play_arrow)),
+                ? const Icon(Icons.pause_rounded)
+                : const Icon(Icons.play_arrow_rounded)),
         IconButton(
             onPressed: () {
               state.playNext();
             },
-            icon: const Icon(Icons.skip_next)),
+            icon: const Icon(Icons.skip_next_rounded)),
       ];
       var desktopActions = [
         Container(
@@ -78,12 +79,12 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
               child: VolumePicker(
                   onChanged: (v) => state.setVolume(v), initial: state.volume),
             ),
-            child: const Icon(Icons.volume_up)),
+            child: const Icon(Icons.volume_up_rounded)),
         IconButton(
             onPressed: () {
               state.changeShuffleMode();
             },
-            icon: const Icon(Icons.shuffle),
+            icon: const Icon(Icons.shuffle_rounded),
             color: state.shuffleOrder ? primaryColour : null),
         IconButton(
           onPressed: () {
@@ -95,53 +96,80 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             onPressed: () {
               state.playPrevious();
             },
-            icon: const Icon(Icons.skip_previous)),
+            icon: const Icon(Icons.skip_previous_rounded)),
         IconButton(
             onPressed: () {
               state.playPause();
             },
             icon: state.playing
-                ? const Icon(Icons.pause)
-                : const Icon(Icons.play_arrow)),
+                ? const Icon(Icons.pause_rounded)
+                : const Icon(Icons.play_arrow_rounded)),
         IconButton(
             onPressed: () {
               state.playNext();
             },
-            icon: const Icon(Icons.skip_next)),
+            icon: const Icon(Icons.skip_next_rounded)),
       ];
 
       return AppBar(
           backgroundColor: Theme.of(context).colorScheme.onSecondary,
-          title: (state.currentArtUriSync != null && !Platform.isAndroid)
-              ? Row(
-                  children: [
-                    Material(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7)),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.file(
-                        isAntiAlias: true,
-                        filterQuality: FilterQuality.medium,
-                        File.fromUri(state.currentArtUriSync!),
-                        fit: BoxFit.cover,
-                        width: 65,
-                        height: 35,
+          title: RawMaterialButton(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadiusDirectional.circular(10)),
+            onPressed: () => Navigator.of(context).push(PageRouteBuilder(
+                pageBuilder: (context, _, __) => const FullPlayer(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0.0, 1.0);
+                  const end = Offset.zero;
+                  const curve = Curves.ease;
+
+                  final tween = Tween(begin: begin, end: end);
+                  final curvedAnimation = CurvedAnimation(
+                    parent: animation,
+                    curve: curve,
+                  );
+
+                  return SlideTransition(
+                    position: tween.animate(curvedAnimation),
+                    child: child,
+                  );
+                })),
+            child: (state.currentArtUriSync != null && !Platform.isAndroid)
+                ? Row(
+                    children: [
+                      Material(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7)),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.file(
+                          isAntiAlias: true,
+                          filterQuality: FilterQuality.medium,
+                          File.fromUri(state.currentArtUriSync!),
+                          fit: BoxFit.cover,
+                          width: 65,
+                          height: 35,
+                        ),
                       ),
-                    ),
-                    Flexible(
-                        child: Container(
-                      margin: const EdgeInsets.only(left: 10),
-                      child: Text(
-                        state.trackName ?? "",
-                        overflow: TextOverflow.fade,
-                      ),
-                    ))
-                  ],
-                )
-              : Text(
-                  state.trackName ?? "",
-                  overflow: TextOverflow.fade,
-                ),
+                      Flexible(
+                          child: Container(
+                        margin: const EdgeInsets.only(left: 10),
+                        child: Text(
+                          state.trackName ?? "",
+                          style: const TextStyle(fontSize: 18),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ))
+                    ],
+                  )
+                : Text(
+                    state.trackName ?? "",
+                    style: const TextStyle(fontSize: 18),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+          ),
           actions: Platform.isAndroid ? mobileActions : desktopActions,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
@@ -153,9 +181,11 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                     trackShape: CustomTrackShape(),
                     overlayShape:
                         const RoundSliderOverlayShape(overlayRadius: 8),
-                    thumbShape: RoundSliderThumbShape(
-                      enabledThumbRadius: Platform.isAndroid ? 1 : 7,
-                    ),
+                    thumbShape: Platform.isAndroid
+                        ? SliderComponentShape.noThumb
+                        : const RoundSliderThumbShape(
+                            enabledThumbRadius: 7,
+                          ),
                   ),
                   child: Slider(
                     min: 0,
