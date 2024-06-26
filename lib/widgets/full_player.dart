@@ -22,16 +22,63 @@ class _FullPlayerState extends State<FullPlayer> {
   @override
   Widget build(BuildContext context) {
     return Consumer<PlayerState>(builder: (context, state, child) {
+      // primary colour
+      final colours = Theme.of(context).colorScheme;
+      final primaryColour = colours.primary;
+      // loopMode icon
+      Widget loopModeIcon;
+      if (state.loopMode == LoopMode.one) {
+        loopModeIcon = Badge(
+          backgroundColor: primaryColour,
+          label: const Text('1'),
+          child: const Icon(Icons.loop_rounded),
+        );
+      } else if (state.loopMode == LoopMode.all) {
+        loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
+      } else {
+        loopModeIcon = const Icon(Icons.loop_rounded);
+      }
       return Scaffold(
         appBar: AppBar(
-            leading: IconButton(
-          padding: const EdgeInsets.all(15),
-          icon: const Icon(Icons.arrow_back),
-          iconSize: 25,
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        )),
+          actions: [
+            CustomPopup(
+                content: SizedBox(
+                  width: 250,
+                  height: 30,
+                  child: VolumePicker(
+                      onChanged: (v) => state.setVolume(v),
+                      initial: state.volume),
+                ),
+                child: const Icon(
+                  Icons.volume_up_rounded,
+                  color: Color(0xFF49454F),
+                  size: 35,
+                )),
+            IconButton(
+              onPressed: () {
+                state.changeShuffleMode();
+              },
+              icon: const Icon(Icons.shuffle_rounded),
+              color: state.shuffleOrder ? primaryColour : null,
+              iconSize: 35,
+            ),
+            IconButton(
+              onPressed: () {
+                state.changeLoopMode();
+              },
+              icon: loopModeIcon,
+              iconSize: 35,
+            ),
+          ],
+          leading: IconButton(
+            padding: const EdgeInsets.all(15),
+            icon: const Icon(Icons.arrow_back),
+            iconSize: 25,
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
         body: Center(
             child: Column(
           children: [
@@ -168,30 +215,13 @@ class _ControlsState extends State<_Controls> {
     if (currentPos < 0) currentPos = 0;
     if (currentMax < 0) currentMax = 0;
     // theme
-    // primary colour
-    final colours = Theme.of(context).colorScheme;
-    final primaryColour = colours.primary;
-    final secondaryColour = colours.secondary;
-    // loopMode icon
-    Widget loopModeIcon;
-    if (state.loopMode == LoopMode.one) {
-      loopModeIcon = Badge(
-        backgroundColor: primaryColour,
-        label: const Text('1'),
-        child: const Icon(Icons.loop_rounded),
-      );
-    } else if (state.loopMode == LoopMode.all) {
-      loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
-    } else {
-      loopModeIcon = const Icon(Icons.loop_rounded);
-    }
 
     return SizedBox(
       width: w,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(bottom: 5),
+            margin: const EdgeInsets.only(bottom: 5),
             child: SliderTheme(
                 data: const SliderThemeData(
                   trackHeight: 10,
@@ -266,39 +296,6 @@ class _ControlsState extends State<_Controls> {
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomPopup(
-                  content: SizedBox(
-                    width: 250,
-                    height: 30,
-                    child: VolumePicker(
-                        onChanged: (v) => state.setVolume(v),
-                        initial: state.volume),
-                  ),
-                  child: Icon(
-                    Icons.volume_up_rounded,
-                    color: secondaryColour,
-                    size: 30,
-                  )),
-              IconButton(
-                onPressed: () {
-                  state.changeShuffleMode();
-                },
-                icon: const Icon(Icons.shuffle_rounded),
-                color: state.shuffleOrder ? primaryColour : null,
-                iconSize: 30,
-              ),
-              IconButton(
-                onPressed: () {
-                  state.changeLoopMode();
-                },
-                icon: loopModeIcon,
-                iconSize: 30,
-              ),
-            ],
-          )
         ],
       ),
     );
