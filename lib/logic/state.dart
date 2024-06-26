@@ -60,6 +60,7 @@ class PlayerState extends ChangeNotifier {
   bool _isShuffled = false;
 
   int? get currentIndex => _player.currentIndex;
+  String? get libraryPath => _libraryPath;
 
   MediaInfo? get currentTrack {
     var index = _player.currentIndex;
