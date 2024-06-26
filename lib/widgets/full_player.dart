@@ -87,7 +87,6 @@ class _FullPlayerState extends State<FullPlayer> {
               padding: const EdgeInsets.only(top: 15),
               child: _TrackInfo(
                 trackName: state.trackName ?? "Unknown",
-                trackArtist: state.playingObjectName ?? "Unknown",
               ),
             ),
             Container(
@@ -145,18 +144,14 @@ class _ArtImage extends StatelessWidget {
 
 class _TrackInfo extends StatelessWidget {
   final String trackName;
-  final String trackArtist;
 
   const _TrackInfo({
     required this.trackName,
-    required this.trackArtist,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
+    return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: FittedBox(
             fit: BoxFit.fitWidth,
@@ -171,22 +166,7 @@ class _TrackInfo extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: FittedBox(
-            fit: BoxFit.fitWidth,
-            child: Text(
-              trackArtist,
-              overflow: TextOverflow.fade,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 25),
-            ),
-          ),
-        )
-      ],
-    );
+        );
   }
 }
 
