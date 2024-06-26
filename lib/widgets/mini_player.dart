@@ -157,7 +157,8 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                         child: Text(
                           state.trackName ?? "",
                           style: const TextStyle(fontSize: 18),
-                          overflow: TextOverflow.fade,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ))
                     ],
@@ -165,7 +166,8 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                 : Text(
                     state.trackName ?? "",
                     style: const TextStyle(fontSize: 18),
-                    overflow: TextOverflow.fade,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
           ),
           actions: Platform.isAndroid ? mobileActions : desktopActions,
@@ -179,9 +181,11 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                     trackShape: CustomTrackShape(),
                     overlayShape:
                         const RoundSliderOverlayShape(overlayRadius: 8),
-                    thumbShape: RoundSliderThumbShape(
-                      enabledThumbRadius: Platform.isAndroid ? 1 : 7,
-                    ),
+                    thumbShape: Platform.isAndroid
+                        ? SliderComponentShape.noThumb
+                        : const RoundSliderThumbShape(
+                            enabledThumbRadius: 7,
+                          ),
                   ),
                   child: Slider(
                     min: 0,

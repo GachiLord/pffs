@@ -116,12 +116,12 @@ class PlayerState extends ChangeNotifier {
 
   String? get trackName {
     var index = _player.currentIndex;
-    if (index != null) {
-      if (_currentSequnce != null) {
-        return _currentSequnce![index].name;
-      }
+    try {
+      return _currentSequnce![index!].name;
+    } catch (e) {
+      print(e);
+      return null;
     }
-    return null;
   }
 
   @override

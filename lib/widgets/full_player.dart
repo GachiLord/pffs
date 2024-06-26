@@ -62,32 +62,38 @@ class _ArtImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.sizeOf(context).height * 0.65;
-    final w = MediaQuery.sizeOf(context).width * 0.85;
     final radius = BorderRadius.circular(15);
 
     return uri != null
-        ? Material(
-            shape: RoundedRectangleBorder(borderRadius: radius),
-            clipBehavior: Clip.antiAlias,
-            child: Image.file(
-                isAntiAlias: true,
-                filterQuality: FilterQuality.high,
-                File.fromUri(uri!),
-                fit: BoxFit.cover,
-                height: h,
-                width: w),
-          )
-        : ClipRRect(
-            borderRadius: radius,
+        ? Expanded(
             child: Container(
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              child: Icon(
-                Icons.music_note_outlined,
-                size: h,
-              ),
-            ),
-          );
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Material(
+                  type: MaterialType.transparency,
+                  shape: RoundedRectangleBorder(borderRadius: radius),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.file(
+                    isAntiAlias: true,
+                    filterQuality: FilterQuality.high,
+                    File.fromUri(uri!),
+                    fit: BoxFit.cover,
+                  ),
+                )),
+          )
+        : Expanded(child: LayoutBuilder(builder: (context, constraint) {
+            return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: Container(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    child: Icon(
+                      Icons.music_note_outlined,
+                      size: constraint.biggest.height,
+                    ),
+                  ),
+                ));
+          }));
   }
 }
 
@@ -104,17 +110,35 @@ class _TrackInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          trackName,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 35,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: Text(
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              trackName,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 35,
+              ),
+            ),
           ),
         ),
-        Text(
-          trackArtist,
-          style: const TextStyle(fontSize: 25),
-        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: Text(
+              trackArtist,
+              overflow: TextOverflow.fade,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 25),
+            ),
+          ),
+        )
       ],
     );
   }
