@@ -3,7 +3,6 @@ import 'package:flutter_popup/flutter_popup.dart';
 import 'package:just_audio/just_audio.dart' show LoopMode;
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
-import 'package:pffs/widgets/mini_player.dart' show CustomTrackShape;
 import 'package:provider/provider.dart';
 import 'dart:io';
 
@@ -194,13 +193,11 @@ class _ControlsState extends State<_Controls> {
           Container(
             padding: const EdgeInsets.only(bottom: 5),
             child: SliderTheme(
-                data: SliderThemeData(
+                data: const SliderThemeData(
                   trackHeight: 10,
-                  trackShape: CustomTrackShape(),
-                  overlayShape:
-                      const RoundSliderOverlayShape(overlayRadius: 10),
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 9,
+                  overlayShape: RoundSliderOverlayShape(overlayRadius: 7),
+                  thumbShape: RoundSliderThumbShape(
+                    enabledThumbRadius: 8,
                   ),
                 ),
                 child: Slider(
