@@ -37,12 +37,12 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
-          child: const Icon(Icons.loop),
+          child: const Icon(Icons.loop_rounded),
         );
       } else if (state.loopMode == LoopMode.all) {
-        loopModeIcon = Icon(Icons.loop, color: primaryColour);
+        loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
-        loopModeIcon = const Icon(Icons.loop);
+        loopModeIcon = const Icon(Icons.loop_rounded);
       }
       // actions
       var mobileActions = [
@@ -50,19 +50,19 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             onPressed: () {
               state.playPrevious();
             },
-            icon: const Icon(Icons.skip_previous)),
+            icon: const Icon(Icons.skip_previous_rounded)),
         IconButton(
             onPressed: () {
               state.playPause();
             },
             icon: state.playing
-                ? const Icon(Icons.pause)
-                : const Icon(Icons.play_arrow)),
+                ? const Icon(Icons.pause_rounded)
+                : const Icon(Icons.play_arrow_rounded)),
         IconButton(
             onPressed: () {
               state.playNext();
             },
-            icon: const Icon(Icons.skip_next)),
+            icon: const Icon(Icons.skip_next_rounded)),
       ];
       var desktopActions = [
         Container(
@@ -79,12 +79,12 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
               child: VolumePicker(
                   onChanged: (v) => state.setVolume(v), initial: state.volume),
             ),
-            child: const Icon(Icons.volume_up)),
+            child: const Icon(Icons.volume_up_rounded)),
         IconButton(
             onPressed: () {
               state.changeShuffleMode();
             },
-            icon: const Icon(Icons.shuffle),
+            icon: const Icon(Icons.shuffle_rounded),
             color: state.shuffleOrder ? primaryColour : null),
         IconButton(
           onPressed: () {
@@ -96,19 +96,19 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             onPressed: () {
               state.playPrevious();
             },
-            icon: const Icon(Icons.skip_previous)),
+            icon: const Icon(Icons.skip_previous_rounded)),
         IconButton(
             onPressed: () {
               state.playPause();
             },
             icon: state.playing
-                ? const Icon(Icons.pause)
-                : const Icon(Icons.play_arrow)),
+                ? const Icon(Icons.pause_rounded)
+                : const Icon(Icons.play_arrow_rounded)),
         IconButton(
             onPressed: () {
               state.playNext();
             },
-            icon: const Icon(Icons.skip_next)),
+            icon: const Icon(Icons.skip_next_rounded)),
       ];
 
       return AppBar(
@@ -117,7 +117,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadiusDirectional.circular(10)),
             onPressed: () => Navigator.of(context).push(PageRouteBuilder(
-                pageBuilder: (context, _, __) => FullPlayer(),
+                pageBuilder: (context, _, __) => const FullPlayer(),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                   const begin = Offset(0.0, 1.0);
@@ -156,7 +156,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                         margin: const EdgeInsets.only(left: 10),
                         child: Text(
                           state.trackName ?? "",
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 18),
                           overflow: TextOverflow.fade,
                         ),
                       ))
@@ -164,7 +164,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                   )
                 : Text(
                     state.trackName ?? "",
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 18),
                     overflow: TextOverflow.fade,
                   ),
           ),
