@@ -52,7 +52,7 @@ class _FullPlayerState extends State<FullPlayer> {
                 child: const Icon(
                   Icons.volume_up_rounded,
                   color: Color(0xFF49454F),
-                  size: 35,
+                  size: 25,
                 )),
             IconButton(
               onPressed: () {
@@ -60,14 +60,14 @@ class _FullPlayerState extends State<FullPlayer> {
               },
               icon: const Icon(Icons.shuffle_rounded),
               color: state.shuffleOrder ? primaryColour : null,
-              iconSize: 35,
+              iconSize: 25,
             ),
             IconButton(
               onPressed: () {
                 state.changeLoopMode();
               },
               icon: loopModeIcon,
-              iconSize: 35,
+              iconSize: 25,
             ),
           ],
           leading: IconButton(
@@ -152,21 +152,18 @@ class _TrackInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: FittedBox(
-            fit: BoxFit.fitWidth,
-            child: Text(
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              trackName,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 35,
-              ),
-            ),
-          ),
-        );
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Text(
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        trackName,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 35,
+        ),
+      ),
+    );
   }
 }
 
@@ -204,7 +201,7 @@ class _ControlsState extends State<_Controls> {
             margin: const EdgeInsets.only(bottom: 5),
             child: SliderTheme(
                 data: const SliderThemeData(
-                  trackHeight: 10,
+                  trackHeight: 4,
                   overlayShape: RoundSliderOverlayShape(overlayRadius: 7),
                   thumbShape: RoundSliderThumbShape(
                     enabledThumbRadius: 8,
@@ -256,7 +253,7 @@ class _ControlsState extends State<_Controls> {
                   state.playPrevious();
                 },
                 icon: const Icon(Icons.skip_previous_rounded),
-                iconSize: 75,
+                iconSize: 95,
               ),
               IconButton(
                 onPressed: () {
@@ -265,14 +262,14 @@ class _ControlsState extends State<_Controls> {
                 icon: state.playing
                     ? const Icon(Icons.pause_rounded)
                     : const Icon(Icons.play_arrow_rounded),
-                iconSize: 75,
+                iconSize: 95,
               ),
               IconButton(
                 onPressed: () {
                   state.playNext();
                 },
                 icon: const Icon(Icons.skip_next_rounded),
-                iconSize: 75,
+                iconSize: 95,
               ),
             ],
           ),
