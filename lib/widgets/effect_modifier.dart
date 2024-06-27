@@ -139,7 +139,7 @@ class _SpeedPickerState extends State<SpeedPicker> {
     return Row(
       children: [
         Slider(
-          min: 1.0,
+          min: 0.5,
           max: 2.0,
           value: value,
           onChanged: (v) {
