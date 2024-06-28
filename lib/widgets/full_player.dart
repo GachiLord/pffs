@@ -41,19 +41,21 @@ class _FullPlayerState extends State<FullPlayer> {
       return Scaffold(
         appBar: AppBar(
           actions: [
-            CustomPopup(
-                content: SizedBox(
-                  width: 250,
-                  height: 30,
-                  child: VolumePicker(
-                      onChanged: (v) => state.setVolume(v),
-                      initial: state.volume),
-                ),
-                child: const Icon(
-                  Icons.volume_up_rounded,
-                  color: Color(0xFF49454F),
-                  size: 25,
-                )),
+            Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                child: CustomPopup(
+                    content: SizedBox(
+                      width: 250,
+                      height: 30,
+                      child: VolumePicker(
+                          onChanged: (v) => state.setVolume(v),
+                          initial: state.volume),
+                    ),
+                    child: const Icon(
+                      Icons.volume_up_rounded,
+                      color: Color(0xFF49454F),
+                      size: 25,
+                    ))),
             IconButton(
               onPressed: () {
                 state.changeShuffleMode();

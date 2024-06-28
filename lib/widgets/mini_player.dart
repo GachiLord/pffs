@@ -72,14 +72,18 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             style: const TextStyle(fontSize: 16),
           ),
         ),
-        CustomPopup(
-            content: SizedBox(
-              width: 250,
-              height: 30,
-              child: VolumePicker(
-                  onChanged: (v) => state.setVolume(v), initial: state.volume),
-            ),
-            child: const Icon(Icons.volume_up_rounded)),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          child: CustomPopup(
+              content: SizedBox(
+                width: 250,
+                height: 30,
+                child: VolumePicker(
+                    onChanged: (v) => state.setVolume(v),
+                    initial: state.volume),
+              ),
+              child: const Icon(Icons.volume_up_rounded)),
+        ),
         IconButton(
             onPressed: () {
               state.changeShuffleMode();
