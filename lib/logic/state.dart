@@ -192,7 +192,6 @@ class PlayerState extends ChangeNotifier {
       _player.pause();
     } else {
       if (_currentSource != null) {
-        if (!Platform.isWindows && !Platform.isLinux) _player.stop();
         _player.play();
       }
     }
