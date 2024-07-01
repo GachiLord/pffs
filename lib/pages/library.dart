@@ -6,6 +6,7 @@ import 'package:pffs/elements/track.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:pffs/util/informing.dart';
+import 'package:pffs/widgets/search_bar.dart';
 import 'package:provider/provider.dart';
 
 class Library extends StatefulWidget {
@@ -20,6 +21,7 @@ class _LibraryState extends State<Library> {
 
   late bool _isVisible;
   late ScrollController _hideButtonController;
+  String query = "";
 
   @override
   initState() {
@@ -46,6 +48,18 @@ class _LibraryState extends State<Library> {
           initialData: const [],
           future: listTracks(state.libraryPath),
           builder: (BuildContext ctx, AsyncSnapshot snapshot) {
+            // enumerate and filter values
+            List<(int, MediaInfo)> data = List.empty(growable: true);
+            for (var i = 0; i < snapshot.data.length; i++) {
+              data.add((i, snapshot.data[i]));
+            }
+            data = data
+                .where((value) =>
+                    value.$2.name
+                        .contains(RegExp(query, caseSensitive: false)) ==
+                    true)
+                .toList();
+            // render
             Widget output = const Text(
               "Loading",
               textAlign: TextAlign.center,
@@ -54,29 +68,61 @@ class _LibraryState extends State<Library> {
             if (snapshot.hasData) {
               output = ListView.builder(
                 controller: _hideButtonController,
-                itemCount: snapshot.data.length,
+                itemCount: data.length,
+                prototypeItem: data.isNotEmpty
+                    ? Track(
+                        index: data.first.$1,
+                        libraryTracks: snapshot.data,
+                        libraryPath: state.libraryPath!,
+                        trackInfo: data.first.$2,
+                        elementOf: PlayingObject.library,
+                        onAction: (TrackAction a) => {
+                          if (a == TrackAction.delete)
+                            {
+                              showPrompt(
+                                  context,
+                                  'Delete "${data.first.$2.name}"?',
+                                  (ok) => {
+                                        if (ok)
+                                          {
+                                            deleteEntity(data.first.$2.fullPath)
+                                                .then((_) => {
+                                                      setState(() {
+                                                        data.removeAt(0);
+                                                      }),
+                                                      context
+                                                          .read<PlayerState>()
+                                                          .flushPlaying()
+                                                    })
+                                                .catchError((_) => showToast(
+                                                    context,
+                                                    "Failed to delete the track")),
+                                          }
+                                      })
+                            }
+                        },
+                      )
+                    : null,
                 itemBuilder: (context, index) {
                   return Track(
-                    index: index,
+                    index: data[index].$1,
                     libraryTracks: snapshot.data,
                     libraryPath: state.libraryPath!,
-                    trackInfo: snapshot.data[index],
+                    trackInfo: data[index].$2,
                     elementOf: PlayingObject.library,
                     onAction: (TrackAction a) => {
                       if (a == TrackAction.delete)
                         {
                           showPrompt(
                               context,
-                              'Delete "${snapshot.data[index].name}"?',
+                              'Delete "${data[index].$2.name}"?',
                               (ok) => {
                                     if (ok)
                                       {
-                                        deleteEntity(
-                                                snapshot.data[index].fullPath)
+                                        deleteEntity(data[index].$2.fullPath)
                                             .then((_) => {
                                                   setState(() {
-                                                    snapshot.data
-                                                        .removeAt(index);
+                                                    data.removeAt(index);
                                                   }),
                                                   context
                                                       .read<PlayerState>()
@@ -103,6 +149,14 @@ class _LibraryState extends State<Library> {
               );
             }
             return Scaffold(
+                appBar: PreferredSize(
+                    preferredSize: const Size.fromHeight(60),
+                    child: Container(
+                      margin: const EdgeInsets.all(10),
+                      child: TrackSearchBar(
+                        onChange: (v) => setState(() => query = v),
+                      ),
+                    )),
                 floatingActionButton: _isVisible
                     ? FloatingActionButton(
                         onPressed: () {
