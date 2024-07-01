@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:media_kit/ffi/ffi.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,7 +65,9 @@ class PlayerState extends ChangeNotifier {
 
   MediaInfo? get currentTrack {
     var index = _player.currentIndex;
-    if (index != null && _currentSequnce != null) {
+    if (index != null &&
+        _currentSequnce != null &&
+        index < _currentSequnce!.length) {
       return _currentSequnce![index];
     }
     return null;
@@ -344,7 +347,9 @@ class PlayerState extends ChangeNotifier {
 
   void _soundEffect() {
     var index = _player.currentIndex;
-    if (_currentPlaylist != null && index != null) {
+    if (_currentPlaylist != null &&
+        index != null &&
+        index < _currentPlaylist!.tracks.length) {
       // stop last effect
       _soundCounter = 0;
       if (_soundTimer != null) {
@@ -398,7 +403,9 @@ class PlayerState extends ChangeNotifier {
   void _updateArtImage() async {
     var index = _player.currentIndex;
 
-    if (index != null && _currentSequnce != null) {
+    if (index != null &&
+        _currentSequnce != null &&
+        index < _currentSequnce!.length) {
       final trackPath = _currentSequnce![index].fullPath;
       final playlistPath =
           p.join(_prefs.getString("libraryPath") ?? "", _playingObjectName);
