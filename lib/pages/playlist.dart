@@ -31,6 +31,31 @@ class _PlatlistState extends State<Playlist> {
               Widget output = const Text("loading");
               if (snapshot.hasData) {
                 output = ReorderableListView.builder(
+                  prototypeItem: snapshot.data.tracks.isNotEmpty
+                      ? Track(
+                          key: const Key('0'),
+                          libraryPath: widget.libraryPath,
+                          trackInfo: snapshot.data.tracks.first
+                              .getMediaInfo(widget.libraryPath),
+                          playlistRelativePath: widget.info.relativePath,
+                          index: 0,
+                          playlistInfo: snapshot.data,
+                          elementOf: PlayingObject.playlist,
+                          onAction: (TrackAction a) {
+                            if (a == TrackAction.delete) {
+                              deleteFromPlaylist(widget.info.fullPath, 0)
+                                  .catchError((_) => showToast(
+                                      context, "Failed to delete the track"));
+                              setState(() {
+                                playlist.then((value) => {
+                                      value.tracks.removeAt(0),
+                                    });
+                              });
+                              context.read<PlayerState>().flushPlaying();
+                            }
+                          },
+                        )
+                      : null,
                   itemCount: snapshot.data.tracks.length,
                   itemBuilder: (context, index) {
                     return Track(
