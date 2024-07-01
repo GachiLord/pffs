@@ -60,14 +60,14 @@ Future<List<MediaInfo>> listTracks(String? libraryPath) async {
     ".mp3",
     ".m4a",
     ".mp4",
-    "webm",
-    "matroska",
-    "ogg",
-    "wav",
-    "flv",
-    "adts",
-    "flac",
-    "amr"
+    ".webm",
+    ".matroska",
+    ".ogg",
+    ".wav",
+    ".flv",
+    ".adts",
+    ".flac",
+    ".amr"
   ];
   var directory = Directory(libraryPath!);
   // sort track files by date
