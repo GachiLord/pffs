@@ -3,13 +3,14 @@
 Player for favorite songs(pffs) is a music player with a playlist system, that gives full control over playback(speed, order, clip) and sound(volume).
 App is intended to run on Android, Linux and Windows and be as simple as possible.
 
-## Usage
+## Screenshots
 
-1. Install app on your device
-1. choose folder with music
-1. create a playlist
-1. copy folder to other device
-1. go to item 1
+| ![playlist-mobile](./screenshots/playlist-mobile.png)  | ![fullplayer-mobile](./screenshots/fullplayer-mobile.png) | ![playlists-mobile](./screenshots/playlists-mobile.png) |
+| ---------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------- |
+
+
+![desktop-fullplayer](./screenshots/desktop-fullplayer.png)
+![desktop-playlist](./screenshots/desktop-playlist.png)
 
 ## Features
 
@@ -18,10 +19,20 @@ App is intended to run on Android, Linux and Windows and be as simple as possibl
 - track speed adjustment
 - skipping parts of track
 
-## Current state
+## Usage
 
-At this moment the player is quite comfortable to use. Most of the features work fine,
-although there are some bugs with effects functionality on Android.
+1. Install app on your device
+1. choose folder with music
+1. create a playlist
+1. copy folder to other device
+1. go to item 1
+
+## Tips
+
+* To open the full screen player, click on the track name.
+* To change the order of tracks in a playlist on Android, press and hold, then drag.
+* To set image for a track, create file TrackName.png in the same folder.
+* To set image for a playlist, create file PlaylistName.png in the same folder.
 
 ## Installation
 
