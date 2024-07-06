@@ -151,11 +151,8 @@ class _LibraryState extends State<Library> {
             return Scaffold(
                 appBar: PreferredSize(
                     preferredSize: const Size.fromHeight(70),
-                    child: Container(
-                      margin: const EdgeInsets.all(10),
-                      child: TrackSearchBar(
-                        onChange: (v) => setState(() => query = v),
-                      ),
+                    child: TrackSearchBar(
+                      onChange: (v) => setState(() => query = v),
                     )),
                 floatingActionButton: _isVisible
                     ? FloatingActionButton(

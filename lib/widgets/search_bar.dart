@@ -7,14 +7,18 @@ class TrackSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
+
     return Container(
+      decoration: BoxDecoration(
+          color: theme.onSecondary,
+          border: BorderDirectional(
+              bottom: BorderSide(color: theme.secondary, width: 0.5))),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: TextField(
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           hintText: "Search",
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
+          border: InputBorder.none,
         ),
         onChanged: (value) {
           if (onChange != null) {
