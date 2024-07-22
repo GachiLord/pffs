@@ -45,27 +45,22 @@ class _LibraryState extends State<Library> {
   Widget build(BuildContext context) {
     return Consumer<LibraryState>(builder: (context, state, child) {
       return FutureBuilder(
-          initialData: const [],
           future: listTracks(state.libraryPath),
           builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-            // enumerate and filter values
-            List<(int, MediaInfo)> data = List.empty(growable: true);
-            for (var i = 0; i < snapshot.data.length; i++) {
-              data.add((i, snapshot.data[i]));
-            }
-            data = data
-                .where((value) =>
-                    value.$2.name
-                        .contains(RegExp(query, caseSensitive: false)) ==
-                    true)
-                .toList();
             // render
-            Widget output = const Text(
-              "Loading",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 28),
-            );
+            Widget output;
             if (snapshot.hasData) {
+              // enumerate and filter values
+              List<(int, MediaInfo)> data = List.empty(growable: true);
+              for (var i = 0; i < snapshot.data.length; i++) {
+                data.add((i, snapshot.data[i]));
+              }
+              data = data
+                  .where((value) =>
+                      value.$2.name
+                          .contains(RegExp(query, caseSensitive: false)) ==
+                      true)
+                  .toList();
               output = ListView.builder(
                 controller: _hideButtonController,
                 itemCount: data.length,
@@ -145,6 +140,14 @@ class _LibraryState extends State<Library> {
                   "Incorrect path or insufficient permissions",
                   style: TextStyle(fontSize: 28),
                   textAlign: TextAlign.center,
+                ),
+              );
+            } else {
+              output = const Center(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
                 ),
               );
             }

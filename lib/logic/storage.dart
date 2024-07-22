@@ -55,6 +55,7 @@ Future<List<MediaInfo>> listPlaylistTracks(
 }
 
 Future<List<MediaInfo>> listTracks(String? libraryPath) async {
+  await Future.delayed(Duration(seconds: 5));
   List<MediaInfo> items = List.empty(growable: true);
   const musicFiles = [
     ".mp3",
