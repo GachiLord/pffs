@@ -25,10 +25,15 @@ class _PlatlistState extends State<Playlist> {
     return Scaffold(
         appBar: const MiniPlayerAppBar(),
         body: FutureBuilder(
-            initialData: PlaylistConf(tracks: []),
             future: playlist,
             builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-              Widget output = const Text("loading");
+              Widget output = const Center(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
+                ),
+              );
               if (snapshot.hasData) {
                 output = ReorderableListView.builder(
                   prototypeItem: snapshot.data.tracks.isNotEmpty
