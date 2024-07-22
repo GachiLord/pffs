@@ -41,10 +41,15 @@ class _PlaylistsState extends State<Playlists> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        initialData: const [],
         future: items,
         builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-          Widget output = const Text("loading");
+          Widget output = const Center(
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: CircularProgressIndicator(),
+            ),
+          );
           if (snapshot.hasData) {
             output = Scaffold(
                 floatingActionButton: _isVisible
