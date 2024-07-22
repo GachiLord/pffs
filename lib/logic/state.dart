@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:media_kit/ffi/ffi.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
