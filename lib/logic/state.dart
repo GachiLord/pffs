@@ -473,16 +473,22 @@ class PlayerState extends ChangeNotifier {
           _player.currentIndex! <= _currentPlaylist!.tracks.length) {
         var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
         if (skip.isActive) {
-          var start = Duration(seconds: skip.start);
-          if (pos < start) {
-            _player.seek(start);
+          // handle start
+          if (skip.start != 0) {
+            var start = Duration(seconds: skip.start);
+            if (pos < start) {
+              _player.seek(start);
+            }
           }
-          var end = Duration(seconds: skip.end);
-          if (pos >= (end - const Duration(seconds: 1))) {
-            setVolumeForNext();
-          }
-          if (pos > end) {
-            playNext();
+          // handle end
+          if (skip.end != 0) {
+            var end = Duration(seconds: skip.end);
+            if (pos >= (end - const Duration(seconds: 1))) {
+              setVolumeForNext();
+            }
+            if (pos > end) {
+              playNext();
+            }
           }
         }
       }
