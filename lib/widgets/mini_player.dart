@@ -180,48 +180,55 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
           actions: Platform.isAndroid ? mobileActions : desktopActions,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.5),
-            child: SizedBox(
-              height: Platform.isAndroid ? 1 : 9,
-              child: SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: Platform.isAndroid ? 4 : 8,
-                    trackShape: CustomTrackShape(),
-                    overlayShape:
-                        const RoundSliderOverlayShape(overlayRadius: 8),
-                    thumbShape: Platform.isAndroid
-                        ? SliderComponentShape.noThumb
-                        : const RoundSliderThumbShape(
-                            enabledThumbRadius: 7,
-                          ),
-                  ),
-                  child: Slider(
-                    min: 0,
-                    max: currentMax,
-                    value: currentPos,
-                    onChangeStart: (v) {
-                      if (Platform.isAndroid) return;
-                      if (state.playing) state.playPause();
+            child: state.currentTrack != null
+                ? SizedBox(
+                    height: Platform.isAndroid ? 1 : 9,
+                    child: SliderTheme(
+                        data: SliderThemeData(
+                          trackHeight: Platform.isAndroid ? 4 : 8,
+                          trackShape: CustomTrackShape(),
+                          overlayShape:
+                              const RoundSliderOverlayShape(overlayRadius: 8),
+                          thumbShape: Platform.isAndroid
+                              ? SliderComponentShape.noThumb
+                              : const RoundSliderThumbShape(
+                                  enabledThumbRadius: 7,
+                                ),
+                        ),
+                        child: Slider(
+                          min: 0,
+                          max: currentMax,
+                          value: currentPos,
+                          onChangeStart: (v) {
+                            if (Platform.isAndroid) return;
+                            if (state.playing) state.playPause();
 
-                      setState(() {
-                        pos = v;
-                      });
-                    },
-                    onChanged: (v) {
-                      if (Platform.isAndroid) return;
-                      setState(() {
-                        pos = v;
-                      });
-                    },
-                    onChangeEnd: (v) {
-                      if (Platform.isAndroid) return;
-                      state.setPos(v.toInt());
-                      setState(() {
-                        pos = null;
-                      });
-                      state.playPause();
-                    },
-                  )),
-            ),
+                            setState(() {
+                              pos = v;
+                            });
+                          },
+                          onChanged: (v) {
+                            if (Platform.isAndroid) return;
+                            setState(() {
+                              pos = v;
+                            });
+                          },
+                          onChangeEnd: (v) {
+                            if (Platform.isAndroid) return;
+                            state.setPos(v.toInt());
+                            setState(() {
+                              pos = null;
+                            });
+                            state.playPause();
+                          },
+                        )),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                        border: BorderDirectional(
+                            bottom: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                                width: 0.5)))),
           ));
     });
   }
