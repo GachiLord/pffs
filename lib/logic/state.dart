@@ -31,6 +31,7 @@ enum PlayingObject { library, playlist, nothing }
 class PlayerState extends ChangeNotifier {
   late final SharedPreferences _prefs;
   late final AudioPlayer _player;
+  List<int>? _currentShuffleIndexes;
   List<MediaInfo>? _currentSequnce;
   ConcatenatingAudioSource? _currentSource;
   late double _maxVolume;
@@ -202,12 +203,14 @@ class PlayerState extends ChangeNotifier {
   final Random _random = Random();
 
   void _playRandom() {
-    final prev = _player.currentIndex;
-    var cur = _random.nextInt(_currentSequnce?.length ?? 0);
-
-    while (prev == cur && (_currentSequnce?.length ?? 0) > 1) {
-      cur = _random.nextInt(_currentSequnce?.length ?? 0);
+    if (_currentSequnce == null || _player.currentIndex == null) return;
+    if (_currentShuffleIndexes == null || _currentShuffleIndexes!.isEmpty) {
+      _currentShuffleIndexes = List.generate(_currentSequnce!.length, (i) => i);
+      _currentShuffleIndexes!.removeAt(_player.currentIndex!);
+      _currentShuffleIndexes!.shuffle(_random);
     }
+
+    var cur = _currentShuffleIndexes!.removeLast();
     _player.seek(Duration.zero, index: cur);
   }
 
@@ -230,6 +233,7 @@ class PlayerState extends ChangeNotifier {
 
   void playTracks(List<MediaInfo> tracks, int startIndex) async {
     _currentSequnce = tracks;
+    _currentShuffleIndexes = null;
     _currentPlaylist = null;
     _playingObject = PlayingObject.library;
     _playingObjectName = "Library";
@@ -266,6 +270,7 @@ class PlayerState extends ChangeNotifier {
     _currentSequnce =
         playlist.tracks.map((t) => t.getMediaInfo(libraryPath)).toList();
     _currentPlaylist = playlist;
+    _currentShuffleIndexes = null;
     _playingObject = PlayingObject.playlist;
     _playingObjectName = playlistName;
     _isShuffled = playlist.shuffled ?? false;
@@ -452,6 +457,7 @@ class PlayerState extends ChangeNotifier {
         if (_currentPlaylist != null && nextVolume.isActive) {
           _currentVolume = nextVolume.startVolume;
           _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
+          if (_isShuffled) _playRandom();
         }
       }
     }
