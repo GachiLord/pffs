@@ -85,13 +85,7 @@ class _LibraryState extends State<Library> {
                                                       setState(() {
                                                         data.removeAt(0);
                                                       }),
-                                                      context
-                                                          .read<PlayerState>()
-                                                          .flushPlaying()
                                                     })
-                                                .catchError((_) => showToast(
-                                                    context,
-                                                    "Failed to delete the track")),
                                           }
                                       })
                             }
@@ -119,13 +113,7 @@ class _LibraryState extends State<Library> {
                                                   setState(() {
                                                     data.removeAt(index);
                                                   }),
-                                                  context
-                                                      .read<PlayerState>()
-                                                      .flushPlaying()
                                                 })
-                                            .catchError((_) => showToast(
-                                                context,
-                                                "Failed to delete the track")),
                                       }
                                   })
                         }

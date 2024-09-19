@@ -53,7 +53,12 @@ class Track extends StatelessWidget {
             if (elementOf == PlayingObject.library) {
               var p = state.playingObject;
               if (p == PlayingObject.nothing || p == PlayingObject.playlist) {
-                state.playTracks(libraryTracks!, index!);
+                var p = PlaylistConf(
+                    tracks: libraryTracks!
+                        .map((v) => TrackConf(relativePath: v.relativePath))
+                        .toList(growable: false));
+                state.setSequence(
+                    p, PlayingObject.library, "Library", index ?? 0);
               }
               if (p == PlayingObject.library) {
                 state.setSuqenceIndex(index!);
@@ -61,15 +66,21 @@ class Track extends StatelessWidget {
             } else {
               var po = state.playingObject;
               if (po == PlayingObject.nothing || po == PlayingObject.library) {
-                state.playPlaylist(libraryPath, playlistInfo!,
-                    p.withoutExtension(playlistRelativePath!), index!);
+                state.setSequence(
+                    playlistInfo!,
+                    PlayingObject.playlist,
+                    p.basenameWithoutExtension(playlistRelativePath ?? ""),
+                    index!);
               }
               if (po == PlayingObject.playlist) {
                 if (state.currentPlaylist == playlistInfo) {
                   state.setSuqenceIndex(index!);
                 } else {
-                  state.playPlaylist(libraryPath, playlistInfo!,
-                      p.withoutExtension(playlistRelativePath!), index!);
+                  state.setSequence(
+                      playlistInfo!,
+                      PlayingObject.playlist,
+                      p.basenameWithoutExtension(playlistRelativePath ?? ""),
+                      index!);
                 }
               }
             }
@@ -174,11 +185,7 @@ Future<void> addDialog(
             children: playlists
                 .map((p) => SimpleDialogOption(
                       onPressed: () {
-                        addToPlaylist(p.fullPath, track)
-                            .then((_) =>
-                                context.read<PlayerState>().flushPlaying())
-                            .catchError((_) =>
-                                showToast(context, "Failed to save changes"));
+                        addToPlaylist(p.fullPath, track);
                         Navigator.pop(context);
                       },
                       child: Text(p.name),

@@ -40,7 +40,7 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
           player.playPrevious();
           break;
         case PressedButton.stop:
-          player.flushPlaying();
+          // player.flushPlaying();
           smtc.setPlaybackStatus(PlaybackStatus.Stopped);
           break;
         default:
@@ -52,16 +52,16 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     print("Error: $e");
   }
   // handle player events
-  await for (var _ in player.currentIndexStream) {
-    if (player.currentTrack != null) {
-      smtc.setPlaybackStatus(PlaybackStatus.Playing);
+  // await for (var _ in player.currentIndexStream) {
+  //   if (player.currentTrack != null) {
+  //     smtc.setPlaybackStatus(PlaybackStatus.Playing);
 
-      smtc.updateMetadata(
-        MusicMetadata(
-          title: player.trackName,
-          artist: player.playingObjectName,
-        ),
-      );
-    }
-  }
+  //     smtc.updateMetadata(
+  //       MusicMetadata(
+  //         title: player.trackName,
+  //         artist: player.playingObjectName,
+  //       ),
+  //     );
+  //   }
+  // }
 }

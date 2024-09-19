@@ -3,7 +3,6 @@ import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:pffs/widgets/mini_player.dart';
-import 'package:provider/provider.dart';
 import '../elements/track.dart';
 import '../util/informing.dart';
 
@@ -56,7 +55,6 @@ class _PlatlistState extends State<Playlist> {
                                       value.tracks.removeAt(0),
                                     });
                               });
-                              context.read<PlayerState>().flushPlaying();
                             }
                           },
                         )
@@ -82,7 +80,6 @@ class _PlatlistState extends State<Playlist> {
                                   value.tracks.removeAt(index),
                                 });
                           });
-                          context.read<PlayerState>().flushPlaying();
                         }
                       },
                     );
@@ -99,10 +96,6 @@ class _PlatlistState extends State<Playlist> {
                         value.tracks.insert(newIndex, item);
                       });
                     });
-                    var state = context.read<PlayerState>();
-                    if (state.currentPlaylist == snapshot.data) {
-                      state.movePlaylistTrack(oldIndex, newIndex);
-                    }
                   },
                 );
               } else if (snapshot.hasError) {
