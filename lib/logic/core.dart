@@ -1,7 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:path/path.dart' as p;
+import 'package:media_kit/media_kit.dart';
 
 part 'core.g.dart';
 
@@ -9,7 +9,7 @@ part 'core.g.dart';
 class PlaylistConf {
   final List<TrackConf> tracks;
   bool? shuffled;
-  LoopMode? loopMode;
+  PlaylistMode? loopMode;
 
   PlaylistConf({required this.tracks});
 

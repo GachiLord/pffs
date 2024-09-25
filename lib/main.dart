@@ -1,16 +1,15 @@
-import 'package:audio_session/audio_session.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart' as audio;
-import 'package:just_audio_background/just_audio_background.dart';
-import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/pages/playlists.dart';
 import 'package:pffs/widgets/mini_player.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/library.dart';
+import 'package:media_kit/media_kit.dart' as audio;
 import 'package:pffs/logic/service/service_linux.dart' as linux_service;
 import 'package:pffs/logic/service/service_windows.dart' as windows_service;
+import 'package:pffs/logic/service/service_android.dart' as android_service;
 import 'dart:io' show Platform;
 
 void main() async {
@@ -18,16 +17,8 @@ void main() async {
   // init key-value store
   final prefs = await SharedPreferences.getInstance();
   // init player if desktop app
-  if (Platform.isLinux || Platform.isWindows) {
-    JustAudioMediaKit.ensureInitialized(windows: true, linux: true);
-    JustAudioMediaKit.title = 'pffs';
-  }
-  var player = audio.AudioPlayer(
-      audioLoadConfiguration: const audio.AudioLoadConfiguration(
-          androidLoadControl: audio.AndroidLoadControl(
-              minBufferDuration: Duration(seconds: 20))));
-  final session = await AudioSession.instance;
-  await session.configure(const AudioSessionConfiguration.music());
+  audio.MediaKit.ensureInitialized();
+  var player = audio.Player();
   // init state
   var libState = LibraryState(prefs);
   var playerState = PlayerState(prefs, player);
@@ -37,12 +28,12 @@ void main() async {
   } else if (Platform.isWindows) {
     windows_service.service(playerState, libState);
   } else {
-    await JustAudioBackground.init(
-      preloadArtwork: true,
-      androidNotificationIcon: 'drawable/player_icon',
-      androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
-      androidNotificationOngoing: true,
+    var _ = await AudioService.init(
+      builder: () => android_service.AudioHandler(playerState),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
+        androidNotificationChannelName: 'Music playback',
+      ),
     );
   }
   // run app

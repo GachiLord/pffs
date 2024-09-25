@@ -36,24 +36,21 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   provider: ^6.1.2
-  just_audio: ^0.9.37
   shared_preferences: ^2.2.3
   filesystem_picker: ^4.1.0
   path: ^1.9.0
-  just_audio_media_kit: ^2.0.0
-  media_kit_libs_linux: any
-  media_kit_libs_windows_audio: any
+  # media_kit_libs_linux: any
+  # media_kit_libs_windows_audio: any
   media_kit: any
   media_kit_libs_audio: any
+  audio_service: ^0.18.15
   flutter_popup: ^3.3.0
   mpris_service:
     git:
       url: https://github.com/alexmercerind/mpris_service.git
       ref: master # branch name
-  just_audio_background: ^0.0.1-beta.11
   permission_handler: ^11.3.1
   collection: ^1.18.0
-  audio_session: ^0.1.19
   smtc_windows: ^0.1.2
   rxdart: ^0.27.7
   badges: ^3.1.2
