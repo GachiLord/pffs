@@ -85,6 +85,7 @@ class PlayerState extends ChangeNotifier {
   MediaInfo? _track;
   int _index = 0;
   bool _shuffled = false;
+  final Random _random = Random();
   // should not be modified here, because it is a ref owned by UI
   PlaylistConf? _playlist;
 
@@ -93,9 +94,14 @@ class PlayerState extends ChangeNotifier {
   MediaInfo? get currentTrack => _track;
   Uri? get currentArtUriSync => _artUri;
   String? get trackName => _track?.name;
-  int? get currentIndex => _index;
+  int? get currentIndex => _shuffled ? _shuffleIndexes![_index] : _index;
   PlayingObject get playingObject => _playingObject;
   String? get playingObjectName => _playlistName;
+
+  void _createShuffleIndexes(int len) {
+    _shuffleIndexes = List.generate(len, (i) => i);
+    _shuffleIndexes!.shuffle(_random);
+  }
 
   setSequence(
       PlaylistConf p, PlayingObject type, String name, int startIndex) async {
@@ -105,8 +111,17 @@ class PlayerState extends ChangeNotifier {
     _loopMode = p.loopMode ?? PlaylistMode.loop;
     _index = startIndex;
     _shuffled = p.shuffled ?? false;
+    // play
     if (p.tracks.isNotEmpty) {
-      await _playItem(p.tracks[startIndex]);
+      if (_shuffled) {
+        // handle shuffled mode
+        _createShuffleIndexes(p.tracks.length);
+        _index = _shuffleIndexes!.indexOf(_index);
+        await _playItem(p.tracks[startIndex]);
+      } else {
+        // handle normal mode
+        await _playItem(p.tracks[_index]);
+      }
     }
     notifyListeners();
   }
@@ -121,11 +136,11 @@ class PlayerState extends ChangeNotifier {
     // play audio
     _track = media;
     _artUri = artUri;
-    _player.open(Media(media.fullPath), play: true);
+    await _player.open(Media(media.fullPath), play: true);
     // apply skipEffect
     if (item.skip.isActive) {
       var start = Duration(seconds: item.skip.start);
-      _player.seek(start);
+      await _player.seek(start);
     }
   }
 
@@ -137,7 +152,12 @@ class PlayerState extends ChangeNotifier {
   bool get shuffleOrder => _shuffled;
 
   void setSuqenceIndex(int index) async {
-    _index = index;
+    // handle shuffle mode
+    if (_shuffled) {
+      _index = _shuffleIndexes!.indexOf(index);
+    } else {
+      _index = index;
+    }
     var item = _playlist!.tracks[index];
     // apply sound effect
     await _setStartVolume(item);
@@ -158,45 +178,45 @@ class PlayerState extends ChangeNotifier {
   TrackConf? _fetchPrevious() {
     if (_playlist == null) return null;
 
+    var newIndex = _index - 1;
+    if (newIndex < 0) {
+      newIndex = _playlist!.tracks.length - newIndex.abs();
+      if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
+    }
+    _index = newIndex;
+
     if (_shuffled) {
-      // TODO: handle shuffled mode
+      return _playlist!.tracks[_shuffleIndexes![newIndex]];
     } else {
-      var newIndex = _index - 1;
-      if (newIndex < 0) {
-        newIndex = _playlist!.tracks.length - newIndex.abs();
-      }
-      _index = newIndex;
       return _playlist!.tracks[newIndex];
     }
-
-    return null;
   }
 
   TrackConf? _fetchCurrent() {
     if (_playlist == null) return null;
 
     if (_shuffled) {
-      // TODO: handle shuffled mode
+      return _playlist!.tracks[_shuffleIndexes![_index]];
     } else {
       return _playlist!.tracks[_index];
     }
-    return null;
   }
 
   TrackConf? _fetchNext() {
     if (_playlist == null) return null;
 
+    var newIndex = _index + 1;
+    if (newIndex == _playlist!.tracks.length) {
+      newIndex = 0;
+      if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
+    }
+    _index = newIndex;
+
     if (_shuffled) {
-      // TODO: handle shuffled mode
+      return _playlist!.tracks[_shuffleIndexes![_index]];
     } else {
-      var newIndex = _index + 1;
-      if (newIndex == _playlist!.tracks.length) {
-        newIndex = 0;
-      }
-      _index = newIndex;
       return _playlist!.tracks[newIndex];
     }
-    return null;
   }
 
   void playNext() async {
@@ -220,6 +240,7 @@ class PlayerState extends ChangeNotifier {
 
   void changeShuffleMode() {
     _shuffled = !_shuffled;
+    _createShuffleIndexes(_playlist?.tracks.length ?? 0);
     notifyListeners();
   }
 
