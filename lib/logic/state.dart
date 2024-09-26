@@ -253,7 +253,12 @@ class PlayerState extends ChangeNotifier {
 
   void changeShuffleMode() {
     _shuffled = !_shuffled;
-    _createShuffleIndexes(_playlist?.tracks.length ?? 0);
+    if (_shuffled) {
+      _createShuffleIndexes(_playlist?.tracks.length ?? 0);
+      _index = _shuffleIndexes!.indexOf(_index);
+    } else {
+      _index = _shuffleIndexes![_index];
+    }
     notifyListeners();
   }
 
