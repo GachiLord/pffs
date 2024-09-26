@@ -127,7 +127,7 @@ class PlayerState extends ChangeNotifier {
   }
 
   _playItem(TrackConf item) async {
-    // handle effects
+    // handle sound effect
     await _setStartVolume(item);
     // media
     var media = item.getMediaInfo(_libraryPath!);
@@ -316,10 +316,8 @@ class PlayerState extends ChangeNotifier {
   }
 
   _setStartVolume(TrackConf? item) async {
-    if (item != null && item.volume.isActive) {
-      _volume = item.volume.startVolume;
-      await _setLimitedVolume();
-    }
+    if (item != null && item.volume.isActive) _volume = item.volume.startVolume;
+    await _setLimitedVolume();
   }
 
   // observers
