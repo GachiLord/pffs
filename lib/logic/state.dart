@@ -45,9 +45,9 @@ class PlayerState extends ChangeNotifier {
 
   void _soundEffect() async {
     if (_playlist == null) return;
-    if (_index >= _playlist!.tracks.length) return;
+    if (_index! >= _playlist!.tracks.length) return;
 
-    var conf = _playlist!.tracks[_index];
+    var conf = _playlist!.tracks[_index!];
     var start = conf.volume.startVolume;
     var end = conf.volume.endVolume;
     var time = conf.volume.transitionTimeSeconds;
@@ -61,9 +61,9 @@ class PlayerState extends ChangeNotifier {
 
   void _skipEffect(int posSeconds) async {
     if (_playlist == null) return;
-    if (_index >= _playlist!.tracks.length) return;
+    if (_index! >= _playlist!.tracks.length) return;
 
-    var conf = _playlist!.tracks[_index];
+    var conf = _playlist!.tracks[_index!];
 
     if (conf.skip.isActive &&
         conf.skip.end != 0 &&
@@ -83,18 +83,33 @@ class PlayerState extends ChangeNotifier {
   List<int>? _shuffleIndexes;
   Uri? _artUri;
   MediaInfo? _track;
-  int _index = 0;
+  int? _index = 0;
   bool _shuffled = false;
   final Random _random = Random();
   // should not be modified here, because it is a ref owned by UI
   PlaylistConf? _playlist;
 
+  Stream<bool> get completedStream => _player.stream.completed;
   PlaylistMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
   MediaInfo? get currentTrack => _track;
+  Future<Uri?> get currentArtUri async {
+    if (_index != null && _playlist != null) {
+      final trackPath =
+          p.join(_libraryPath!, _playlist!.tracks[_index!].relativePath);
+      final playlistPath =
+          p.join(_prefs.getString("libraryPath") ?? "", _playlistName);
+
+      return await getMediaArtUri(trackPath) ??
+          await getMediaArtUri(playlistPath);
+    }
+
+    return null;
+  }
+
   Uri? get currentArtUriSync => _artUri;
   String? get trackName => _track?.name;
-  int? get currentIndex => _shuffled ? _shuffleIndexes![_index] : _index;
+  int? get currentIndex => _shuffled ? _shuffleIndexes![_index!] : _index;
   PlayingObject get playingObject => _playingObject;
   String? get playingObjectName => _playlistName;
 
@@ -116,11 +131,11 @@ class PlayerState extends ChangeNotifier {
       if (_shuffled) {
         // handle shuffled mode
         _createShuffleIndexes(p.tracks.length);
-        _index = _shuffleIndexes!.indexOf(_index);
+        _index = _shuffleIndexes!.indexOf(_index!);
         await _playItem(p.tracks[startIndex]);
       } else {
         // handle normal mode
-        await _playItem(p.tracks[_index]);
+        await _playItem(p.tracks[_index!]);
       }
     }
     notifyListeners();
@@ -147,7 +162,7 @@ class PlayerState extends ChangeNotifier {
   void flushPlaying() {
     _player.stop();
     _playlist = null;
-    _index = 0;
+    _index = null;
     _playingObject = PlayingObject.nothing;
     _artUri = null;
     _playlistName = "Unknown";
@@ -163,6 +178,7 @@ class PlayerState extends ChangeNotifier {
   Duration? get duration => _player.state.duration;
   bool get playing => _player.state.playing;
   bool get shuffleOrder => _shuffled;
+  Stream<bool> get playingStream => _player.stream.playing;
 
   void setSuqenceIndex(int index) async {
     // handle shuffle mode
@@ -191,7 +207,7 @@ class PlayerState extends ChangeNotifier {
   TrackConf? _fetchPrevious() {
     if (_playlist == null) return null;
 
-    var newIndex = _index - 1;
+    var newIndex = _index! - 1;
     if (newIndex < 0) {
       newIndex = _playlist!.tracks.length - newIndex.abs();
       if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
@@ -209,16 +225,16 @@ class PlayerState extends ChangeNotifier {
     if (_playlist == null) return null;
 
     if (_shuffled) {
-      return _playlist!.tracks[_shuffleIndexes![_index]];
+      return _playlist!.tracks[_shuffleIndexes![_index!]];
     } else {
-      return _playlist!.tracks[_index];
+      return _playlist!.tracks[_index!];
     }
   }
 
   TrackConf? _fetchNext() {
     if (_playlist == null) return null;
 
-    var newIndex = _index + 1;
+    var newIndex = _index! + 1;
     if (newIndex >= _playlist!.tracks.length) {
       newIndex = 0;
       if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
@@ -226,9 +242,9 @@ class PlayerState extends ChangeNotifier {
     _index = newIndex;
 
     if (_shuffled) {
-      return _playlist!.tracks[_shuffleIndexes![_index]];
+      return _playlist!.tracks[_shuffleIndexes![_index!]];
     } else {
-      return _playlist!.tracks[_index];
+      return _playlist!.tracks[_index!];
     }
   }
 
@@ -255,9 +271,9 @@ class PlayerState extends ChangeNotifier {
     _shuffled = !_shuffled;
     if (_shuffled) {
       _createShuffleIndexes(_playlist?.tracks.length ?? 0);
-      _index = _shuffleIndexes!.indexOf(_index);
+      _index = _shuffleIndexes!.indexOf(_index!);
     } else {
-      _index = _shuffleIndexes![_index];
+      _index = _shuffleIndexes![_index!];
     }
     notifyListeners();
   }
