@@ -45,6 +45,7 @@ class PlayerState extends ChangeNotifier {
 
   void _soundEffect() async {
     if (_playlist == null) return;
+    if (_index == _playlist!.tracks.length) return;
 
     var conf = _playlist!.tracks[_index];
     var start = conf.volume.startVolume;
@@ -60,6 +61,7 @@ class PlayerState extends ChangeNotifier {
 
   void _skipEffect(int posSeconds) async {
     if (_playlist == null) return;
+    if (_index == _playlist!.tracks.length) return;
 
     var conf = _playlist!.tracks[_index];
 
@@ -77,7 +79,7 @@ class PlayerState extends ChangeNotifier {
 
   String _playlistName = "Unknown";
   PlayingObject _playingObject = PlayingObject.nothing;
-  // LoopMode _loopMode = LoopMode.all;
+  PlaylistMode _loopMode = PlaylistMode.loop;
   List<int>? _shuffleIndexes;
   Uri? _artUri;
   MediaInfo? _track;
@@ -86,7 +88,7 @@ class PlayerState extends ChangeNotifier {
   // should not be modified here, because it is a ref owned by UI
   PlaylistConf? _playlist;
 
-  // LoopMode get loopMode => _loopMode;
+  PlaylistMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
   MediaInfo? get currentTrack => _track;
   Uri? get currentArtUriSync => _artUri;
@@ -100,7 +102,7 @@ class PlayerState extends ChangeNotifier {
     _playingObject = type;
     _playlist = p;
     _playlistName = name;
-    // _loopMode = p.loopMode ?? LoopMode.all;
+    _loopMode = p.loopMode ?? PlaylistMode.loop;
     _index = startIndex;
     _shuffled = p.shuffled ?? false;
     if (p.tracks.isNotEmpty) {
@@ -188,7 +190,7 @@ class PlayerState extends ChangeNotifier {
       // TODO: handle shuffled mode
     } else {
       var newIndex = _index + 1;
-      if (newIndex > _playlist!.tracks.length) {
+      if (newIndex == _playlist!.tracks.length) {
         newIndex = 0;
       }
       _index = newIndex;
@@ -222,7 +224,34 @@ class PlayerState extends ChangeNotifier {
   }
 
   void changeLoopMode() {
-    // TODO: implement
+    if (_player.state.playing == false) {
+      _player.stop();
+    }
+    // update in player
+    switch (_loopMode) {
+      case PlaylistMode.none:
+        {
+          _loopMode = PlaylistMode.loop;
+          break;
+        }
+      case PlaylistMode.loop:
+        {
+          _loopMode = PlaylistMode.single;
+          break;
+        }
+      case PlaylistMode.single:
+        {
+          _loopMode = PlaylistMode.none;
+          break;
+        }
+    }
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _playlist!.loopMode = _loopMode;
+      // update playlist file
+      var path = p.setExtension(p.join(_libraryPath!, _playlistName), ".json");
+      save(path, _playlist!);
+    }
   }
 
   void setPos(int pos) {
@@ -267,7 +296,17 @@ class PlayerState extends ChangeNotifier {
   void _processingStateObserver() async {
     _player.stream.completed.listen((e) {
       if (e) {
-        var item = _fetchNext();
+        TrackConf? item;
+        // handle loop mode
+        if (_loopMode == PlaylistMode.single) {
+          item = _fetchCurrent();
+        } else if (_loopMode == PlaylistMode.none &&
+            _index == _playlist!.tracks.length - 1) {
+          item = null;
+        } else {
+          item = _fetchNext();
+        }
+
         if (item != null) {
           _playItem(item);
         }
