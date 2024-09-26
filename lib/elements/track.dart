@@ -185,7 +185,15 @@ Future<void> addDialog(
             children: playlists
                 .map((p) => SimpleDialogOption(
                       onPressed: () {
-                        addToPlaylist(p.fullPath, track);
+                        addToPlaylist(p.fullPath, track).then((_) {
+                          if (context.mounted) {
+                            context.read<PlayerState>().flushPlaying();
+                          }
+                        }).catchError((_) {
+                          if (context.mounted) {
+                            showToast(context, "Failed to save changes");
+                          }
+                        });
                         Navigator.pop(context);
                       },
                       child: Text(p.name),

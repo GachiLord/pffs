@@ -44,6 +44,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => playerState)
       ],
       child: App(
+        playerState: playerState,
         prefs: prefs,
       ),
     ),
@@ -52,23 +53,28 @@ void main() async {
 
 class App extends StatelessWidget {
   final SharedPreferences prefs;
+  final PlayerState playerState;
 
-  const App({required this.prefs, super.key});
+  const App({required this.prefs, required this.playerState, super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true),
-      home: Navigation(prefs: prefs),
+      home: Navigation(
+        prefs: prefs,
+        playerState: playerState,
+      ),
     );
   }
 }
 
 class Navigation extends StatefulWidget {
   final SharedPreferences prefs;
+  final PlayerState playerState;
 
-  const Navigation({required this.prefs, super.key});
+  const Navigation({required this.prefs, required this.playerState, super.key});
 
   @override
   State<Navigation> createState() => _NavigationState();
@@ -89,7 +95,10 @@ class _NavigationState extends State<Navigation> {
         body: Consumer<LibraryState>(builder: (context, state, child) {
           return <Widget>[
             const Library(),
-            Playlists(path: state.libraryPath),
+            Playlists(
+              path: state.libraryPath,
+              playerState: widget.playerState,
+            ),
           ][currentPageIndex];
         }),
         bottomNavigationBar: NavigationBar(

@@ -45,7 +45,7 @@ class PlayerState extends ChangeNotifier {
 
   void _soundEffect() async {
     if (_playlist == null) return;
-    if (_index == _playlist!.tracks.length) return;
+    if (_index >= _playlist!.tracks.length) return;
 
     var conf = _playlist!.tracks[_index];
     var start = conf.volume.startVolume;
@@ -61,7 +61,7 @@ class PlayerState extends ChangeNotifier {
 
   void _skipEffect(int posSeconds) async {
     if (_playlist == null) return;
-    if (_index == _playlist!.tracks.length) return;
+    if (_index >= _playlist!.tracks.length) return;
 
     var conf = _playlist!.tracks[_index];
 
@@ -144,6 +144,19 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
+  void flushPlaying() {
+    _player.stop();
+    _playlist = null;
+    _index = 0;
+    _playingObject = PlayingObject.nothing;
+    _artUri = null;
+    _playlistName = "Unknown";
+    _shuffleIndexes = null;
+    _track = null;
+    _shuffled = false;
+    notifyListeners();
+  }
+
   // playback
 
   Duration get pos => _player.state.position;
@@ -206,7 +219,7 @@ class PlayerState extends ChangeNotifier {
     if (_playlist == null) return null;
 
     var newIndex = _index + 1;
-    if (newIndex == _playlist!.tracks.length) {
+    if (newIndex >= _playlist!.tracks.length) {
       newIndex = 0;
       if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
     }
@@ -215,7 +228,7 @@ class PlayerState extends ChangeNotifier {
     if (_shuffled) {
       return _playlist!.tracks[_shuffleIndexes![_index]];
     } else {
-      return _playlist!.tracks[newIndex];
+      return _playlist!.tracks[_index];
     }
   }
 

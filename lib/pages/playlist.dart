@@ -7,13 +7,18 @@ import '../elements/track.dart';
 import '../util/informing.dart';
 
 class Playlist extends StatefulWidget {
+  final PlayerState playerState;
   final String libraryPath;
   final MediaInfo info;
 
   @override
   State<Playlist> createState() => _PlatlistState();
 
-  const Playlist({super.key, required this.info, required this.libraryPath});
+  const Playlist(
+      {super.key,
+      required this.info,
+      required this.libraryPath,
+      required this.playerState});
 }
 
 class _PlatlistState extends State<Playlist> {
@@ -48,13 +53,18 @@ class _PlatlistState extends State<Playlist> {
                           onAction: (TrackAction a) {
                             if (a == TrackAction.delete) {
                               deleteFromPlaylist(widget.info.fullPath, 0)
-                                  .catchError((_) => showToast(
-                                      context, "Failed to delete the track"));
+                                  .catchError((_) {
+                                if (context.mounted) {
+                                  showToast(
+                                      context, "Failed to delete the track");
+                                }
+                              });
                               setState(() {
                                 playlist.then((value) => {
                                       value.tracks.removeAt(0),
                                     });
                               });
+                              widget.playerState.flushPlaying();
                             }
                           },
                         )
@@ -73,13 +83,17 @@ class _PlatlistState extends State<Playlist> {
                       onAction: (TrackAction a) {
                         if (a == TrackAction.delete) {
                           deleteFromPlaylist(widget.info.fullPath, index)
-                              .catchError((_) => showToast(
-                                  context, "Failed to delete the track"));
+                              .catchError((_) {
+                            if (context.mounted) {
+                              showToast(context, "Failed to delete the track");
+                            }
+                          });
                           setState(() {
                             playlist.then((value) => {
                                   value.tracks.removeAt(index),
                                 });
                           });
+                          widget.playerState.flushPlaying();
                         }
                       },
                     );
@@ -94,6 +108,7 @@ class _PlatlistState extends State<Playlist> {
                             widget.info.fullPath, oldIndex, newIndex);
                         final item = value.tracks.removeAt(oldIndex);
                         value.tracks.insert(newIndex, item);
+                        widget.playerState.flushPlaying();
                       });
                     });
                   },
