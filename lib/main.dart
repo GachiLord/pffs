@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/pages/playlists.dart';
@@ -28,9 +29,14 @@ void main() async {
   } else if (Platform.isWindows) {
     windows_service.service(playerState, libState);
   } else {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
     var _ = await AudioService.init(
       builder: () => android_service.AudioHandler(playerState),
       config: const AudioServiceConfig(
+        preloadArtwork: true,
+        androidNotificationOngoing: true,
+        androidNotificationIcon: 'drawable/player_icon',
         androidNotificationChannelId: 'com.gachilord.pffs.channel.audio',
         androidNotificationChannelName: 'Music playback',
       ),

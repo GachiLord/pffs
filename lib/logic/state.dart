@@ -48,13 +48,16 @@ class PlayerState extends ChangeNotifier {
     if (_index! >= _playlist!.tracks.length) return;
 
     var conf = _playlist!.tracks[_index!];
+
+    if (!conf.volume.isActive) return;
+
     var start = conf.volume.startVolume;
     var end = conf.volume.endVolume;
     var time = conf.volume.transitionTimeSeconds;
 
     if (_volume == end) return;
 
-    var delta = ((end - start) / (10 * time)).abs();
+    var delta = ((end - start) / (max(1, 10 * time))).abs();
     _volume = min(_volume + delta, end);
     await _setLimitedVolume();
   }
@@ -90,6 +93,7 @@ class PlayerState extends ChangeNotifier {
   PlaylistConf? _playlist;
 
   Stream<bool> get completedStream => _player.stream.completed;
+  String? get playlistName => _playlistName;
   PlaylistMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
   MediaInfo? get currentTrack => _track;
@@ -332,7 +336,11 @@ class PlayerState extends ChangeNotifier {
   }
 
   _setStartVolume(TrackConf? item) async {
-    if (item != null && item.volume.isActive) _volume = item.volume.startVolume;
+    if (item != null && item.volume.isActive) {
+      _volume = item.volume.startVolume;
+    } else {
+      _volume = 1.0;
+    }
     await _setLimitedVolume();
   }
 
