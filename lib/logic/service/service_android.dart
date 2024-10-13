@@ -18,16 +18,20 @@ class AudioHandler extends BaseAudioHandler
     _player.completedStream.listen((v) async {
       if (_player.currentTrack != null && v) {
         playbackState.add(PlaybackState(
-          // Which buttons should appear in the notification now
           controls: [
             MediaControl.skipToPrevious,
             v ? MediaControl.play : MediaControl.pause,
-            MediaControl.stop,
             MediaControl.skipToNext,
           ],
+          systemActions: const {
+            MediaAction.seek,
+            MediaAction.seekForward,
+            MediaAction.seekBackward,
+          },
           androidCompactActionIndices: const [0, 1, 3],
           processingState: AudioProcessingState.ready,
           playing: true,
+          updatePosition: Duration.zero,
           speed: 1.0,
           queueIndex: _player.currentIndex,
         ));
@@ -47,14 +51,18 @@ class AudioHandler extends BaseAudioHandler
           controls: [
             MediaControl.skipToPrevious,
             v ? MediaControl.play : MediaControl.pause,
-            MediaControl.stop,
             MediaControl.skipToNext,
           ],
+          systemActions: const {
+            MediaAction.seek,
+            MediaAction.seekForward,
+            MediaAction.seekBackward,
+          },
           androidCompactActionIndices: const [0, 1, 3],
           processingState: AudioProcessingState.ready,
+          updatePosition: _player.pos,
           playing: v,
           speed: 1.0,
-          // The current queue position
           queueIndex: _player.currentIndex,
         ));
         var item = MediaItem(
@@ -67,39 +75,31 @@ class AudioHandler extends BaseAudioHandler
         mediaItem.add(item);
       }
     });
+    _player.durationStream.listen((v) async {
+      if (mediaItem.valueOrNull != null) {
+        mediaItem.add(mediaItem.value!.copyWith(duration: v));
+      }
+    });
+    _player.seekStream.listen((v) async {
+      if (playbackState.valueOrNull != null) {
+        playbackState.add(playbackState.value.copyWith(updatePosition: v));
+      }
+    });
   }
 
   @override
   Future<void> play() async {
-    playbackState.add(playbackState.value.copyWith(
-      playing: true,
-      controls: [
-        MediaControl.skipToPrevious,
-        MediaControl.pause,
-        MediaControl.stop,
-        MediaControl.skipToNext,
-      ],
-    ));
     _player.playPause();
   }
 
   @override
   Future<void> pause() async {
-    playbackState.add(playbackState.value.copyWith(
-      playing: false,
-      controls: [
-        MediaControl.skipToPrevious,
-        MediaControl.play,
-        MediaControl.stop,
-        MediaControl.skipToNext,
-      ],
-    ));
     _player.playPause();
   }
 
   @override
   Future<void> stop() async {
-    _player.flushPlaying();
+    _player.playPause();
   }
 
   @override
@@ -110,5 +110,15 @@ class AudioHandler extends BaseAudioHandler
   @override
   Future<void> skipToQueueItem(int index) async {
     _player.setSuqenceIndex(index);
+  }
+
+  @override
+  Future<void> skipToNext() {
+    return _player.playNext();
+  }
+
+  @override
+  Future<void> skipToPrevious() {
+    return _player.playPrevious();
   }
 }

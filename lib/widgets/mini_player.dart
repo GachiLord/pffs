@@ -201,7 +201,6 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                           value: currentPos,
                           onChangeStart: (v) {
                             if (Platform.isAndroid) return;
-                            if (state.playing) state.playPause();
 
                             setState(() {
                               pos = v;
@@ -219,7 +218,6 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                             setState(() {
                               pos = null;
                             });
-                            state.playPause();
                           },
                         )),
                   )

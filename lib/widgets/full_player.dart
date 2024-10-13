@@ -214,8 +214,6 @@ class _ControlsState extends State<_Controls> {
                   max: currentMax,
                   value: currentPos,
                   onChangeStart: (v) {
-                    if (state.playing) state.playPause();
-
                     setState(() {
                       pos = v;
                     });
@@ -230,7 +228,6 @@ class _ControlsState extends State<_Controls> {
                     setState(() {
                       pos = null;
                     });
-                    state.playPause();
                   },
                 )),
           ),
@@ -242,7 +239,12 @@ class _ControlsState extends State<_Controls> {
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                state.duration.toString().split(".")[0].replaceFirst("0:", ""),
+                state.duration == null
+                    ? "00:00"
+                    : state.duration
+                        .toString()
+                        .split(".")[0]
+                        .replaceFirst("0:", ""),
                 style: const TextStyle(fontSize: 16),
               )
             ],

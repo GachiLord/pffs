@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:pffs/logic/core.dart';
@@ -122,7 +123,7 @@ class PlayerState extends ChangeNotifier {
     _shuffleIndexes!.shuffle(_random);
   }
 
-  setSequence(
+  Future<void> setSequence(
       PlaylistConf p, PlayingObject type, String name, int startIndex) async {
     _playingObject = type;
     _playlist = p;
@@ -145,7 +146,7 @@ class PlayerState extends ChangeNotifier {
     notifyListeners();
   }
 
-  _playItem(TrackConf item) async {
+  Future<void> _playItem(TrackConf item) async {
     // handle sound effect
     await _setStartVolume(item);
     // media
@@ -179,10 +180,15 @@ class PlayerState extends ChangeNotifier {
   // playback
 
   Duration get pos => _player.state.position;
-  Duration? get duration => _player.state.duration;
+  Duration? get duration =>
+      _player.state.duration == Duration.zero ? null : _player.state.duration;
   bool get playing => _player.state.playing;
   bool get shuffleOrder => _shuffled;
   Stream<bool> get playingStream => _player.stream.playing;
+  Stream<Duration> get durationStream => _player.stream.duration;
+
+  final StreamController<Duration> _seekStreamController = StreamController();
+  Stream<Duration> get seekStream => _seekStreamController.stream;
 
   void setSuqenceIndex(int index) async {
     // handle shuffle mode
@@ -199,7 +205,7 @@ class PlayerState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void playPrevious() async {
+  Future<void> playPrevious() async {
     var item = _fetchPrevious();
     await _setStartVolume(item);
     if (item != null) {
@@ -252,7 +258,7 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
-  void playNext() async {
+  Future<void> playNext() async {
     var item = _fetchNext();
     await _setStartVolume(item);
 
@@ -314,6 +320,8 @@ class PlayerState extends ChangeNotifier {
   }
 
   void setPos(int pos) {
+    _setStartVolume(_fetchCurrent());
+    _seekStreamController.add(Duration(milliseconds: pos));
     _player.seek(Duration(milliseconds: pos));
   }
 
@@ -331,7 +339,7 @@ class PlayerState extends ChangeNotifier {
     notifyListeners();
   }
 
-  _setLimitedVolume() async {
+  Future<void> _setLimitedVolume() async {
     await _player.setVolume(_volume * _maxVolume * 100);
   }
 
