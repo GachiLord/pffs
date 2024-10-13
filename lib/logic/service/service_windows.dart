@@ -40,7 +40,7 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
           player.playPrevious();
           break;
         case PressedButton.stop:
-          // player.flushPlaying();
+          player.flushPlaying();
           smtc.setPlaybackStatus(PlaybackStatus.Stopped);
           break;
         default:
