@@ -29,8 +29,11 @@ void main() async {
   } else if (Platform.isWindows) {
     windows_service.service(playerState, libState);
   } else {
+    // handle audio session
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.music());
+    android_service.handleSession(session, playerState);
+    // handle audio service
     var _ = await AudioService.init(
       builder: () => android_service.AudioHandler(playerState),
       config: const AudioServiceConfig(

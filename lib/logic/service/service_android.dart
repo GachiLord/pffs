@@ -1,13 +1,9 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:pffs/logic/state.dart';
 
-class AudioHandler extends BaseAudioHandler
-    with
-        QueueHandler, // mix in default queue callback implementations
-        SeekHandler {
-  // mix in default seek callback implementations
-
-  late final PlayerState _player; // e.g. just_audio
+class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+  late final PlayerState _player;
 
   AudioHandler(PlayerState player) {
     _player = player;
@@ -121,4 +117,56 @@ class AudioHandler extends BaseAudioHandler
   Future<void> skipToPrevious() {
     return _player.playPrevious();
   }
+}
+
+Future<void> handleSession(AudioSession session, PlayerState player) async {
+  var lastVolume = player.volume;
+
+  session.interruptionEventStream.listen((event) {
+    if (event.begin) {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          lastVolume = player.volume;
+          player.setVolume(0.2);
+          // Another app started playing audio and we should duck.
+          break;
+        case AudioInterruptionType.pause:
+          player.playPause();
+          break;
+        case AudioInterruptionType.unknown:
+          player.playPause();
+          // Another app started playing audio and we should pause.
+          break;
+      }
+    } else {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          player.setVolume(lastVolume);
+          // The interruption ended and we should unduck.
+          break;
+        case AudioInterruptionType.pause:
+          player.playPause();
+          break;
+        // The interruption ended and we should resume.
+        case AudioInterruptionType.unknown:
+          player.playPause();
+          // The interruption ended but we should not resume.
+          break;
+      }
+    }
+  });
+  session.becomingNoisyEventStream.listen((_) {
+    // The user unplugged the headphones, so we should pause or lower the volume.
+    player.playPause();
+  });
+
+  player.playingStream.listen((v) async {
+    if (v) {
+      if (await session.setActive(true) == false) {
+        // The request was denied and the app should not play audio
+        // e.g. a phonecall is in progress.
+        player.playPause();
+      }
+    }
+  });
 }
