@@ -40,6 +40,7 @@ class PlayerState extends ChangeNotifier {
     // launch observers
     _processingStateObserver();
     _positionObserver();
+    _playingObserver();
   }
 
   // effects
@@ -149,6 +150,8 @@ class PlayerState extends ChangeNotifier {
   Future<void> _playItem(TrackConf item) async {
     // handle sound effect
     await _setStartVolume(item);
+    // handle speed effect
+    await _setSpeed(item);
     // media
     var media = item.getMediaInfo(_libraryPath!);
     var artUri = await getMediaArtUri(media.fullPath) ??
@@ -189,6 +192,10 @@ class PlayerState extends ChangeNotifier {
 
   final StreamController<Duration> _seekStreamController = StreamController();
   Stream<Duration> get seekStream => _seekStreamController.stream;
+
+  Future<void> _setSpeed(TrackConf item) async {
+    await _player.setRate(item.speed.isActive ? item.speed.speed : 1.0);
+  }
 
   void setSuqenceIndex(int index) async {
     // handle shuffle mode
@@ -353,6 +360,17 @@ class PlayerState extends ChangeNotifier {
   }
 
   // observers
+
+  void _playingObserver() async {
+    _player.stream.playing.listen((v) {
+      if (!v) return;
+
+      var item = _fetchCurrent();
+      if (item == null) return;
+
+      _setSpeed(item);
+    });
+  }
 
   void _positionObserver() async {
     _player.stream.position.listen((pos) {
