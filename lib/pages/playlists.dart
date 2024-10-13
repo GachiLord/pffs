@@ -1,18 +1,19 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:pffs/logic/core.dart';
+import 'package:pffs/logic/state.dart';
 import 'package:pffs/util/informing.dart';
 import 'package:pffs/logic/storage.dart';
 import "playlist.dart";
 
 class Playlists extends StatefulWidget {
   final String? path;
+  final PlayerState playerState;
 
   @override
   State<Playlists> createState() => _PlaylistsState();
 
-  const Playlists({super.key, required this.path});
+  const Playlists({super.key, required this.path, required this.playerState});
 }
 
 class _PlaylistsState extends State<Playlists> {
@@ -62,7 +63,9 @@ class _PlaylistsState extends State<Playlists> {
                                       setState(() => value.add(info));
                                     }))
                                 .catchError((_) {
-                              showToast(context, "Name exists or invalid");
+                              if (context.mounted) {
+                                showToast(context, "Name exists or invalid");
+                              }
                             });
                           });
                         },
@@ -84,6 +87,7 @@ class _PlaylistsState extends State<Playlists> {
                                 MaterialPageRoute(
                                     builder: (context) => Playlist(
                                         info: playlist,
+                                        playerState: widget.playerState,
                                         libraryPath: widget.path!)),
                               );
                             },
@@ -121,8 +125,10 @@ class _PlaylistsState extends State<Playlists> {
                                                                   playlist));
                                                         });
                                                       }).catchError((_) {
-                                                        showToast(context,
-                                                            "Failed to delete the playlist");
+                                                        if (context.mounted) {
+                                                          showToast(context,
+                                                              "Failed to delete the playlist");
+                                                        }
                                                       });
                                                     }
                                                   });

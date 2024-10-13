@@ -94,8 +94,12 @@ void showModifyDialog(BuildContext context, PlaylistConf playlist,
             ),
             child: const Text('Save'),
             onPressed: () {
-              setTrackPlaylist(playlistFullPath, trackIndex, track).catchError(
-                  (e) => showToast(context, "Failed to update effects"));
+              setTrackPlaylist(playlistFullPath, trackIndex, track)
+                  .catchError((e) {
+                if (context.mounted) {
+                  showToast(context, "Failed to update effects");
+                }
+              });
               Navigator.of(context).pop();
             },
           ),

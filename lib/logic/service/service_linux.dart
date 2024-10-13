@@ -38,8 +38,8 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     ),
   );
   // handle player events
-  await for (var _ in player.currentIndexStream) {
-    if (player.currentTrack != null) {
+  player.completedStream.listen((v) async {
+    if (player.currentTrack != null && v) {
       instance.playbackStatus = MPRISPlaybackStatus.playing;
 
       final trackPath = player.currentTrack!.fullPath;
@@ -51,5 +51,20 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
         title: player.trackName,
       );
     }
-  }
+  });
+  player.playingStream.listen((v) async {
+    if (player.currentTrack != null && v) {
+      instance.playbackStatus =
+          v ? MPRISPlaybackStatus.playing : MPRISPlaybackStatus.paused;
+
+      final trackPath = player.currentTrack!.fullPath;
+
+      instance.metadata = MPRISMetadata(
+        Uri.parse(trackPath),
+        artUrl: await player.currentArtUri,
+        artist: [player.playingObjectName ?? "Library"],
+        title: player.trackName,
+      );
+    }
+  });
 }

@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
+import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as p;
 
 class LibraryState extends ChangeNotifier {
@@ -30,56 +28,83 @@ enum PlayingObject { library, playlist, nothing }
 
 class PlayerState extends ChangeNotifier {
   late final SharedPreferences _prefs;
-  late final AudioPlayer _player;
-  List<int>? _currentShuffleIndexes;
-  List<MediaInfo>? _currentSequnce;
-  ConcatenatingAudioSource? _currentSource;
-  late double _maxVolume;
+  late final Player _player;
   late String? _libraryPath;
-  double _currentVolume = 1.0;
 
-  /// should not be modified in this class, because it is a ref to ui state
-  PlaylistConf? _currentPlaylist;
-  PlayingObject _playingObject = PlayingObject.nothing;
-  String? _playingObjectName;
-
-  PlayerState(SharedPreferences prefs, AudioPlayer player) {
+  PlayerState(SharedPreferences prefs, Player player) {
     _player = player;
     _prefs = prefs;
     _libraryPath = _prefs.getString("libraryPath");
     _maxVolume = prefs.getDouble("volume") ?? 1.0;
     _player.setVolume(_maxVolume);
-    _sequenceObserver();
+    // launch observers
+    _processingStateObserver();
     _positionObserver();
     _playingObserver();
-    _processingObserver();
   }
-  // state for getters
-  Duration? _latestDuration = Duration.zero;
-  Duration _latestPos = Duration.zero;
-  Uri? _currentArtUri;
-  bool _isShuffled = false;
 
-  int? get currentIndex => _player.currentIndex;
-  String? get libraryPath => _libraryPath;
+  // effects
 
-  MediaInfo? get currentTrack {
-    var index = _player.currentIndex;
-    if (index != null &&
-        _currentSequnce != null &&
-        index < _currentSequnce!.length) {
-      return _currentSequnce![index];
+  void _soundEffect() async {
+    if (_playlist == null) return;
+    if (_index! >= _playlist!.tracks.length) return;
+
+    var conf = _playlist!.tracks[_index!];
+
+    if (!conf.volume.isActive) return;
+
+    var start = conf.volume.startVolume;
+    var end = conf.volume.endVolume;
+    var time = conf.volume.transitionTimeSeconds;
+
+    if (_volume == end) return;
+
+    var delta = ((end - start) / (max(1, 10 * time))).abs();
+    _volume = min(_volume + delta, end);
+    await _setLimitedVolume();
+  }
+
+  void _skipEffect(int posSeconds) async {
+    if (_playlist == null) return;
+    if (_index! >= _playlist!.tracks.length) return;
+
+    var conf = _playlist!.tracks[_index!];
+
+    if (conf.skip.isActive &&
+        conf.skip.end != 0 &&
+        posSeconds >= conf.skip.end) {
+      var item = _fetchNext();
+      if (item != null) {
+        _playItem(item);
+      }
     }
-    return null;
   }
 
-  Future<Uri?> get currentArtUri async {
-    var index = _player.currentIndex;
+  // sequence
 
-    if (index != null && _currentSequnce != null) {
-      final trackPath = _currentSequnce![index].fullPath;
+  String _playlistName = "Unknown";
+  PlayingObject _playingObject = PlayingObject.nothing;
+  PlaylistMode _loopMode = PlaylistMode.loop;
+  List<int>? _shuffleIndexes;
+  Uri? _artUri;
+  MediaInfo? _track;
+  int? _index = 0;
+  bool _shuffled = false;
+  final Random _random = Random();
+  // should not be modified here, because it is a ref owned by UI
+  PlaylistConf? _playlist;
+
+  Stream<bool> get completedStream => _player.stream.completed;
+  String? get playlistName => _playlistName;
+  PlaylistMode get loopMode => _loopMode;
+  PlaylistConf? get currentPlaylist => _playlist;
+  MediaInfo? get currentTrack => _track;
+  Future<Uri?> get currentArtUri async {
+    if (_index != null && _playlist != null) {
+      final trackPath =
+          p.join(_libraryPath!, _playlist!.tracks[_index!].relativePath);
       final playlistPath =
-          p.join(_prefs.getString("libraryPath") ?? "", _playingObjectName);
+          p.join(_prefs.getString("libraryPath") ?? "", _playlistName);
 
       return await getMediaArtUri(trackPath) ??
           await getMediaArtUri(playlistPath);
@@ -88,425 +113,291 @@ class PlayerState extends ChangeNotifier {
     return null;
   }
 
-  Uri? get currentArtUriSync {
-    return _currentArtUri;
-  }
-
-  LoopMode get loopMode => _player.loopMode;
-  bool get shuffleOrder => _isShuffled;
-  Stream<int?> get currentIndexStream => _player.currentIndexStream;
+  Uri? get currentArtUriSync => _artUri;
+  String? get trackName => _track?.name;
+  int? get currentIndex => _shuffled ? _shuffleIndexes![_index!] : _index;
   PlayingObject get playingObject => _playingObject;
-  String? get playingObjectName => _playingObjectName;
-  PlaylistConf? get currentPlaylist => _currentPlaylist;
-  bool get playing => _player.playing;
-  double get volume => _maxVolume;
-  Duration get pos {
-    if (_player.position != Duration.zero) {
-      _latestPos = _player.position;
-      return _player.position;
-    } else {
-      return _latestPos;
-    }
+  String? get playingObjectName => _playlistName;
+
+  void _createShuffleIndexes(int len) {
+    _shuffleIndexes = List.generate(len, (i) => i);
+    _shuffleIndexes!.shuffle(_random);
   }
 
-  Duration? get duration {
-    if (_player.duration == Duration.zero || _player.duration == null) {
-      return _latestDuration;
-    } else {
-      _latestDuration = _player.duration;
-      return _player.duration;
+  Future<void> setSequence(
+      PlaylistConf p, PlayingObject type, String name, int startIndex) async {
+    _playingObject = type;
+    _playlist = p;
+    _playlistName = name;
+    _loopMode = p.loopMode ?? PlaylistMode.loop;
+    _index = startIndex;
+    _shuffled = p.shuffled ?? false;
+    // play
+    if (p.tracks.isNotEmpty) {
+      if (_shuffled) {
+        // handle shuffled mode
+        _createShuffleIndexes(p.tracks.length);
+        _index = _shuffleIndexes!.indexOf(_index!);
+        await _playItem(p.tracks[startIndex]);
+      } else {
+        // handle normal mode
+        await _playItem(p.tracks[_index!]);
+      }
     }
-  }
-
-  String? get trackName {
-    var index = _player.currentIndex;
-    try {
-      return _currentSequnce![index!].name;
-    } catch (e) {
-      print("cannot get trackName: $e");
-      return null;
-    }
-  }
-
-  @override
-  void dispose() {
-    flushPlaying();
-    _player.dispose();
-    super.dispose();
-  }
-
-  void changeShuffleMode() {
-    _isShuffled = !_isShuffled;
-    if (_playingObject == PlayingObject.playlist) {
-      // update playlist model
-      _currentPlaylist!.shuffled = _isShuffled;
-      // update playlist file
-      var path =
-          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
-      save(path, _currentPlaylist!);
-    }
-  }
-
-  void changeLoopMode() {
-    if (_player.playing == false) {
-      _player.stop();
-    }
-    // update in player
-    switch (_player.loopMode) {
-      case LoopMode.off:
-        {
-          _player.setLoopMode(LoopMode.all);
-          break;
-        }
-      case LoopMode.all:
-        {
-          _player.setLoopMode(LoopMode.one);
-          break;
-        }
-      case LoopMode.one:
-        {
-          _player.setLoopMode(LoopMode.off);
-          break;
-        }
-    }
-    if (_playingObject == PlayingObject.playlist) {
-      // update playlist model
-      _currentPlaylist!.loopMode = _player.loopMode;
-      // update playlist file
-      var path =
-          p.setExtension(p.join(_libraryPath!, _playingObjectName), ".json");
-      save(path, _currentPlaylist!);
-    }
-  }
-
-  void setPos(int ms) {
-    _player.seek(Duration(milliseconds: ms));
-  }
-
-  void setVolume(double volume) {
-    _player.setVolume(volume * _currentVolume);
-    _maxVolume = volume;
-    _prefs.setDouble("volume", _maxVolume);
     notifyListeners();
   }
 
-  void playPause() {
-    if (_player.playing) {
-      _player.pause();
-    } else {
-      if (_currentSource != null) {
-        _player.play();
-      }
+  Future<void> _playItem(TrackConf item) async {
+    // handle sound effect
+    await _setStartVolume(item);
+    // handle speed effect
+    await _setSpeed(item);
+    // media
+    var media = item.getMediaInfo(_libraryPath!);
+    var artUri = await getMediaArtUri(media.fullPath) ??
+        await getMediaArtUri(p.join(_libraryPath!, _playlistName));
+    // play audio
+    _track = media;
+    _artUri = artUri;
+    await _player.open(Media(media.fullPath), play: true);
+    // apply skipEffect
+    if (item.skip.isActive) {
+      var start = Duration(seconds: item.skip.start);
+      await _player.seek(start);
     }
-  }
-
-  final Random _random = Random();
-
-  void _playRandom() {
-    if (_currentSequnce == null || _player.currentIndex == null) return;
-    if (_currentShuffleIndexes == null || _currentShuffleIndexes!.isEmpty) {
-      _currentShuffleIndexes = List.generate(_currentSequnce!.length, (i) => i);
-      _currentShuffleIndexes!.removeAt(_player.currentIndex!);
-      _currentShuffleIndexes!.shuffle(_random);
-    }
-
-    var cur = _currentShuffleIndexes!.removeLast();
-    _player.seek(Duration.zero, index: cur);
-  }
-
-  void playNext() {
-    if (_isShuffled) {
-      _playRandom();
-    } else {
-      _player.play();
-      _player.seekToNext();
-    }
-  }
-
-  void playPrevious() {
-    if (_isShuffled) {
-      _playRandom();
-    } else {
-      _player.seekToPrevious();
-    }
-  }
-
-  void playTracks(List<MediaInfo> tracks, int startIndex) async {
-    _currentSequnce = tracks;
-    _currentShuffleIndexes = null;
-    _currentPlaylist = null;
-    _playingObject = PlayingObject.library;
-    _playingObjectName = "Library";
-
-    List<AudioSource> children = List.empty(growable: true);
-    for (var i = 0; i < tracks.length; i++) {
-      var t = tracks[i];
-      children.add(AudioSource.file(t.fullPath,
-          tag: MediaItem(
-              // Specify a unique ID for each media item:
-              id: i.toString(),
-              // Metadata to display in the notification:
-              album: "Library",
-              title: t.name,
-              extras: {"loadThumbnailUri": true},
-              artUri: await getMediaArtUri(t.fullPath))));
-    }
-
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      shuffleOrder: DefaultShuffleOrder(),
-      children: children,
-    );
-    _currentSource = source;
-    _player.setAudioSource(source, initialIndex: startIndex);
-    _player.setLoopMode(LoopMode.all);
-    _player.play();
-    // update art image cache
-    _updateArtImage();
-  }
-
-  void playPlaylist(String libraryPath, PlaylistConf playlist,
-      String playlistName, int startIndex) async {
-    _currentSequnce =
-        playlist.tracks.map((t) => t.getMediaInfo(libraryPath)).toList();
-    _currentPlaylist = playlist;
-    _currentShuffleIndexes = null;
-    _playingObject = PlayingObject.playlist;
-    _playingObjectName = playlistName;
-    _isShuffled = playlist.shuffled ?? false;
-
-    List<AudioSource> children = List.empty(growable: true);
-    for (var i = 0; i < _currentSequnce!.length; i++) {
-      var t = _currentSequnce![i];
-      var tag = MediaItem(
-          // Specify a unique ID for each media item:
-          id: i.toString(),
-          // Metadata to display in the notification:
-          album: playlistName,
-          title: t.name,
-          extras: {"loadThumbnailUri": true},
-          artUri: await getMediaArtUri(t.fullPath) ??
-              await getMediaArtUri(p.join(libraryPath, playlistName)));
-      if (await File(t.fullPath).exists() == false) {
-        children.add(AudioSource.asset("assets/silence.mp3", tag: tag));
-      } else {
-        children.add(AudioSource.file(
-          t.fullPath,
-          tag: tag,
-        ));
-      }
-    }
-
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      shuffleOrder: DefaultShuffleOrder(),
-      children: children,
-    );
-    _currentSource = source;
-    _player.setAudioSource(source, initialIndex: startIndex);
-    _player.setLoopMode(playlist.loopMode ?? LoopMode.all);
-    _player.play();
-    // update art image cache
-    _updateArtImage();
-  }
-
-  void setSuqenceIndex(int index) {
-    _player.seek(null, index: index);
-    _player.play();
-  }
-
-  void movePlaylistTrack(int startIndex, int endIndex) {
-    var path = _currentSequnce!.removeAt(startIndex);
-    _currentSequnce!.insert(endIndex, path);
-    _currentSource!.move(startIndex, endIndex);
-  }
-
-  void setPlaylistTrack(String libraryPath, int index, TrackConf track) {
-    var info = track.getMediaInfo(libraryPath);
-    _currentSequnce![index] = info;
   }
 
   void flushPlaying() {
     _player.stop();
-    _currentSequnce = null;
-    _currentSource = null;
+    _playlist = null;
+    _index = null;
     _playingObject = PlayingObject.nothing;
-    _updateArtImage();
+    _artUri = null;
+    _playlistName = "Unknown";
+    _shuffleIndexes = null;
+    _track = null;
+    _shuffled = false;
+    notifyListeners();
   }
 
-  void addToPlaylist(
-      String libraryPath, PlaylistConf playlist, TrackConf track) {
-    var info = track.getMediaInfo(libraryPath);
-    _currentSequnce!.add(info);
-    _currentSource!.add(AudioSource.file(info.fullPath));
+  // playback
+
+  Duration get pos => _player.state.position;
+  Duration? get duration =>
+      _player.state.duration == Duration.zero ? null : _player.state.duration;
+  bool get playing => _player.state.playing;
+  bool get shuffleOrder => _shuffled;
+  Stream<bool> get playingStream => _player.stream.playing;
+  Stream<Duration> get durationStream => _player.stream.duration;
+
+  final StreamController<Duration> _seekStreamController = StreamController();
+  Stream<Duration> get seekStream => _seekStreamController.stream;
+
+  Future<void> _setSpeed(TrackConf item) async {
+    await _player.setRate(item.speed.isActive ? item.speed.speed : 1.0);
   }
 
-  void deleteTrack(int index) {
-    _currentSequnce!.removeAt(index);
-    _currentSource!.removeAt(index);
-  }
-
-  Timer? _soundTimer;
-  int _soundCounter = 0;
-
-  void _soundEffect() {
-    var index = _player.currentIndex;
-    if (_currentPlaylist != null &&
-        index != null &&
-        index < _currentPlaylist!.tracks.length) {
-      // stop last effect
-      _soundCounter = 0;
-      if (_soundTimer != null) {
-        _soundTimer!.cancel();
-      }
-      // apply effects
-      var track = _currentPlaylist!.tracks[index];
-      var volume = track.volume;
-
-      if (volume.isActive) {
-        _currentVolume = volume.startVolume;
-        _player.setVolume(_currentVolume * _maxVolume);
-        var step = (volume.endVolume - volume.startVolume).abs() /
-            (volume.transitionTimeSeconds > 0
-                ? volume.transitionTimeSeconds
-                : 1);
-        _soundTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-          if (!_player.playing) return;
-
-          if (_soundCounter == volume.transitionTimeSeconds) t.cancel();
-          _soundCounter++;
-          if (volume.endVolume > volume.startVolume) {
-            _currentVolume += step;
-          } else {
-            _currentVolume -= step;
-          }
-          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
-        });
-      } else {
-        _currentVolume = 1.0;
-        _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
-      }
-    }
-  }
-
-  void _speedEffect() async {
-    var index = _player.currentIndex;
-    if (_currentPlaylist != null && index != null) {
-      // apply effects
-      var track = _currentPlaylist!.tracks[index];
-      var speed = track.speed;
-
-      if (speed.isActive) {
-        _player.setSpeed(speed.speed);
-      } else {
-        _player.setSpeed(1);
-      }
-    }
-  }
-
-  void _updateArtImage() async {
-    var index = _player.currentIndex;
-
-    if (index != null &&
-        _currentSequnce != null &&
-        index < _currentSequnce!.length) {
-      final trackPath = _currentSequnce![index].fullPath;
-      final playlistPath =
-          p.join(_prefs.getString("libraryPath") ?? "", _playingObjectName);
-
-      _currentArtUri =
-          await getMediaArtUri(trackPath) ?? await getMediaArtUri(playlistPath);
+  void setSuqenceIndex(int index) async {
+    // handle shuffle mode
+    if (_shuffled) {
+      _index = _shuffleIndexes!.indexOf(index);
     } else {
-      _currentArtUri = null;
+      _index = index;
+    }
+    var item = _playlist!.tracks[index];
+    // apply sound effect
+    await _setStartVolume(item);
+    // play
+    _playItem(item);
+    notifyListeners();
+  }
+
+  Future<void> playPrevious() async {
+    var item = _fetchPrevious();
+    await _setStartVolume(item);
+    if (item != null) {
+      _playItem(item);
     }
     notifyListeners();
   }
 
-  /// Should be called only once
-  void _sequenceObserver() async {
-    await for (final _ in _player.currentIndexStream) {
-      // update art image cache
-      _updateArtImage();
-      // apply effects
-      Timer(
-          const Duration(
-            milliseconds: 100,
-          ),
-          () => _speedEffect());
-      _soundEffect();
-      // update ui
-      notifyListeners();
+  TrackConf? _fetchPrevious() {
+    if (_playlist == null) return null;
+
+    var newIndex = _index! - 1;
+    if (newIndex < 0) {
+      newIndex = _playlist!.tracks.length - newIndex.abs();
+      if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
+    }
+    _index = newIndex;
+
+    if (_shuffled) {
+      return _playlist!.tracks[_shuffleIndexes![newIndex]];
+    } else {
+      return _playlist!.tracks[newIndex];
     }
   }
 
-  /// Should be called only once
-  void _processingObserver() async {
-    // await for (final state in _player.processingStateStream) {
-    //   if (state == ProcessingState.ready) {
-    //     // apply effects
-    //     _soundEffect();
-    //   }
-    // }
+  TrackConf? _fetchCurrent() {
+    if (_playlist == null) return null;
+
+    if (_shuffled) {
+      return _playlist!.tracks[_shuffleIndexes![_index!]];
+    } else {
+      return _playlist!.tracks[_index!];
+    }
   }
 
-  /// Should be called only once
-  void _positionObserver() async {
-    void setVolumeForNext() {
-      if (_player.nextIndex != null) {
-        var nextVolume = _currentPlaylist!.tracks[_player.nextIndex!].volume;
-        if (_currentPlaylist != null && nextVolume.isActive) {
-          _currentVolume = nextVolume.startVolume;
-          _player.setVolume(min(_currentVolume * _maxVolume, 1.0));
-          if (_isShuffled) _playRandom();
+  TrackConf? _fetchNext() {
+    if (_playlist == null) return null;
+
+    var newIndex = _index! + 1;
+    if (newIndex >= _playlist!.tracks.length) {
+      newIndex = 0;
+      if (_shuffled) _createShuffleIndexes(_playlist!.tracks.length);
+    }
+    _index = newIndex;
+
+    if (_shuffled) {
+      return _playlist!.tracks[_shuffleIndexes![_index!]];
+    } else {
+      return _playlist!.tracks[_index!];
+    }
+  }
+
+  Future<void> playNext() async {
+    var item = _fetchNext();
+    await _setStartVolume(item);
+
+    if (item != null) {
+      _playItem(item);
+    }
+    notifyListeners();
+  }
+
+  void playPause() async {
+    // apply sound effect
+    var item = _fetchCurrent();
+    await _setStartVolume(item);
+
+    _player.playOrPause();
+    notifyListeners();
+  }
+
+  void changeShuffleMode() {
+    _shuffled = !_shuffled;
+    if (_shuffled) {
+      _createShuffleIndexes(_playlist?.tracks.length ?? 0);
+      _index = _shuffleIndexes!.indexOf(_index!);
+    } else {
+      _index = _shuffleIndexes![_index!];
+    }
+    notifyListeners();
+  }
+
+  void changeLoopMode() {
+    if (_player.state.playing == false) {
+      _player.stop();
+    }
+    // update in player
+    switch (_loopMode) {
+      case PlaylistMode.none:
+        {
+          _loopMode = PlaylistMode.loop;
+          break;
         }
-      }
-    }
-
-    await for (final pos in _player.positionStream) {
-      // if next track has volume conf
-      // set _currentVolume to its startVolume
-      var d = _player.duration ?? const Duration(seconds: 400);
-      if (pos >= (d - const Duration(seconds: 1)) &&
-          _currentPlaylist != null &&
-          _player.currentIndex != null &&
-          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
-        setVolumeForNext();
-      }
-      // apply skip effect
-      if (_currentPlaylist != null &&
-          _player.currentIndex != null &&
-          _player.currentIndex! <= _currentPlaylist!.tracks.length) {
-        var skip = _currentPlaylist!.tracks[_player.currentIndex!].skip;
-        if (skip.isActive) {
-          // handle start
-          if (skip.start != 0) {
-            var start = Duration(seconds: skip.start);
-            if (pos < start) {
-              _player.seek(start);
-            }
-          }
-          // handle end
-          if (skip.end != 0) {
-            var end = Duration(seconds: skip.end);
-            if (pos >= (end - const Duration(seconds: 1))) {
-              setVolumeForNext();
-            }
-            if (pos > end) {
-              playNext();
-            }
-          }
+      case PlaylistMode.loop:
+        {
+          _loopMode = PlaylistMode.single;
+          break;
         }
-      }
-      notifyListeners();
+      case PlaylistMode.single:
+        {
+          _loopMode = PlaylistMode.none;
+          break;
+        }
+    }
+    if (_playingObject == PlayingObject.playlist) {
+      // update playlist model
+      _playlist!.loopMode = _loopMode;
+      // update playlist file
+      var path = p.setExtension(p.join(_libraryPath!, _playlistName), ".json");
+      save(path, _playlist!);
     }
   }
 
-  /// Should be called only once
+  void setPos(int pos) {
+    _setStartVolume(_fetchCurrent());
+    _seekStreamController.add(Duration(milliseconds: pos));
+    _player.seek(Duration(milliseconds: pos));
+  }
+
+  // sound
+
+  double _volume = 1.0;
+  late double _maxVolume;
+
+  double get volume => _maxVolume;
+
+  void setVolume(double v) {
+    _player.setVolume(v * _volume * 100);
+    _maxVolume = v;
+    _prefs.setDouble("volume", _maxVolume);
+    notifyListeners();
+  }
+
+  Future<void> _setLimitedVolume() async {
+    await _player.setVolume(_volume * _maxVolume * 100);
+  }
+
+  _setStartVolume(TrackConf? item) async {
+    if (item != null && item.volume.isActive) {
+      _volume = item.volume.startVolume;
+    } else {
+      _volume = 1.0;
+    }
+    await _setLimitedVolume();
+  }
+
+  // observers
+
   void _playingObserver() async {
-    await for (final _ in _player.playingStream) {
-      // apply effects
+    _player.stream.playing.listen((v) {
+      if (!v) return;
+
+      var item = _fetchCurrent();
+      if (item == null) return;
+
+      _setSpeed(item);
+    });
+  }
+
+  void _positionObserver() async {
+    _player.stream.position.listen((pos) {
       _soundEffect();
+      _skipEffect(pos.inSeconds);
       notifyListeners();
-    }
+    });
+  }
+
+  void _processingStateObserver() async {
+    _player.stream.completed.listen((e) {
+      if (e) {
+        TrackConf? item;
+        // handle loop mode
+        if (_loopMode == PlaylistMode.single) {
+          item = _fetchCurrent();
+        } else if (_loopMode == PlaylistMode.none &&
+            _index == _playlist!.tracks.length - 1) {
+          item = null;
+        } else {
+          item = _fetchNext();
+        }
+
+        if (item != null) {
+          _playItem(item);
+        }
+      }
+    });
   }
 }

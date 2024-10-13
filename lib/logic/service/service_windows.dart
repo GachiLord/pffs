@@ -51,9 +51,10 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   } catch (e) {
     print("Error: $e");
   }
+
   // handle player events
-  await for (var _ in player.currentIndexStream) {
-    if (player.currentTrack != null) {
+  player.completedStream.listen((v) async {
+    if (player.currentTrack != null && v) {
       smtc.setPlaybackStatus(PlaybackStatus.Playing);
 
       smtc.updateMetadata(
@@ -63,5 +64,18 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
         ),
       );
     }
-  }
+  });
+  player.playingStream.listen((v) async {
+    if (player.currentTrack != null && v) {
+      smtc.setPlaybackStatus(
+          v ? PlaybackStatus.Playing : PlaybackStatus.Paused);
+
+      smtc.updateMetadata(
+        MusicMetadata(
+          title: player.trackName,
+          artist: player.playingObjectName,
+        ),
+      );
+    }
+  });
 }

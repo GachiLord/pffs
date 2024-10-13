@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_popup/flutter_popup.dart';
-import 'package:just_audio/just_audio.dart' show LoopMode;
+import 'package:media_kit/media_kit.dart' as audio;
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:provider/provider.dart';
@@ -27,13 +27,13 @@ class _FullPlayerState extends State<FullPlayer> {
       final primaryColour = colours.primary;
       // loopMode icon
       Widget loopModeIcon;
-      if (state.loopMode == LoopMode.one) {
+      if (state.loopMode == audio.PlaylistMode.single) {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
           child: const Icon(Icons.loop_rounded),
         );
-      } else if (state.loopMode == LoopMode.all) {
+      } else if (state.loopMode == audio.PlaylistMode.loop) {
         loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
         loopModeIcon = const Icon(Icons.loop_rounded);
@@ -214,8 +214,6 @@ class _ControlsState extends State<_Controls> {
                   max: currentMax,
                   value: currentPos,
                   onChangeStart: (v) {
-                    if (state.playing) state.playPause();
-
                     setState(() {
                       pos = v;
                     });
@@ -230,7 +228,6 @@ class _ControlsState extends State<_Controls> {
                     setState(() {
                       pos = null;
                     });
-                    state.playPause();
                   },
                 )),
           ),
@@ -242,7 +239,12 @@ class _ControlsState extends State<_Controls> {
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                state.duration.toString().split(".")[0].replaceFirst("0:", ""),
+                state.duration == null
+                    ? "00:00"
+                    : state.duration
+                        .toString()
+                        .split(".")[0]
+                        .replaceFirst("0:", ""),
                 style: const TextStyle(fontSize: 16),
               )
             ],

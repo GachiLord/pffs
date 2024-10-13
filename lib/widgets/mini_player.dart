@@ -4,8 +4,8 @@ import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:pffs/widgets/full_player.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
-import 'package:just_audio/just_audio.dart' show LoopMode;
 import 'dart:io';
+import 'package:media_kit/media_kit.dart' as audio;
 
 class MiniPlayerAppBar extends StatefulWidget implements PreferredSizeWidget {
   const MiniPlayerAppBar({super.key});
@@ -33,13 +33,13 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
       final primaryColour = Theme.of(context).colorScheme.primary;
       // loopMode icon
       Widget loopModeIcon;
-      if (state.loopMode == LoopMode.one) {
+      if (state.loopMode == audio.PlaylistMode.single) {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
           child: const Icon(Icons.loop_rounded),
         );
-      } else if (state.loopMode == LoopMode.all) {
+      } else if (state.loopMode == audio.PlaylistMode.loop) {
         loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
         loopModeIcon = const Icon(Icons.loop_rounded);
@@ -201,7 +201,6 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                           value: currentPos,
                           onChangeStart: (v) {
                             if (Platform.isAndroid) return;
-                            if (state.playing) state.playPause();
 
                             setState(() {
                               pos = v;
@@ -219,7 +218,6 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
                             setState(() {
                               pos = null;
                             });
-                            state.playPause();
                           },
                         )),
                   )
