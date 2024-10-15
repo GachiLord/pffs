@@ -182,6 +182,7 @@ class PlayerState extends ChangeNotifier {
 
   // playback
 
+  double get speed => _player.state.rate;
   Duration get pos => _player.state.position;
   Duration? get duration =>
       _player.state.duration == Duration.zero ? null : _player.state.duration;

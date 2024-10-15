@@ -28,7 +28,7 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           processingState: AudioProcessingState.ready,
           playing: true,
           updatePosition: Duration.zero,
-          speed: 1.0,
+          speed: _player.speed,
           queueIndex: _player.currentIndex,
         ));
         var item = MediaItem(
@@ -58,7 +58,7 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           processingState: AudioProcessingState.ready,
           updatePosition: _player.pos,
           playing: v,
-          speed: 1.0,
+          speed: _player.speed,
           queueIndex: _player.currentIndex,
         ));
         var item = MediaItem(
