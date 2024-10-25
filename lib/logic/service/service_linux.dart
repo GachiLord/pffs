@@ -22,11 +22,11 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
         instance.playbackStatus = MPRISPlaybackStatus.stopped;
       },
       play: () async {
-        player.playPause();
+        player.play();
         instance.playbackStatus = MPRISPlaybackStatus.playing;
       },
       pause: () async {
-        player.playPause();
+        player.pause();
         instance.playbackStatus = MPRISPlaybackStatus.paused;
       },
       next: () async {
