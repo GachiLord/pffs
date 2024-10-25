@@ -103,7 +103,7 @@ class _NavigationState extends State<Navigation> {
         appBar: const MiniPlayerAppBar(),
         body: Consumer<LibraryState>(builder: (context, state, child) {
           return <Widget>[
-            const Library(),
+            Library(playerState: widget.playerState),
             Playlists(
               path: state.libraryPath,
               playerState: widget.playerState,

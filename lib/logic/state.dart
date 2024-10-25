@@ -17,9 +17,9 @@ class LibraryState extends ChangeNotifier {
 
   String? get libraryPath => _libraryPath;
 
-  void setLibraryPath(String path) {
+  Future<void> setLibraryPath(String path) async {
     _libraryPath = path;
-    _prefs.setString("libraryPath", path);
+    await _prefs.setString("libraryPath", path);
     notifyListeners();
   }
 }
@@ -118,6 +118,10 @@ class PlayerState extends ChangeNotifier {
   int? get currentIndex => _shuffled ? _shuffleIndexes![_index!] : _index;
   PlayingObject get playingObject => _playingObject;
   String? get playingObjectName => _playlistName;
+
+  void updateLibraryPath() {
+    _libraryPath = _prefs.getString("libraryPath");
+  }
 
   void _createShuffleIndexes(int len) {
     _shuffleIndexes = List.generate(len, (i) => i);

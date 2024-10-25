@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class TrackSearchBar extends StatelessWidget {
   final Function(String)? onChange;
+  final bool enabled;
 
-  const TrackSearchBar({this.onChange, super.key});
+  const TrackSearchBar({this.onChange, required this.enabled, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +21,7 @@ class TrackSearchBar extends StatelessWidget {
           hintText: "Search",
           border: InputBorder.none,
         ),
+        enabled: enabled,
         onChanged: (value) {
           if (onChange != null) {
             onChange!(value);

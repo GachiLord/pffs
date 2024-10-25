@@ -13,7 +13,9 @@ class Library extends StatefulWidget {
   @override
   State<Library> createState() => _LibraryState();
 
-  const Library({super.key});
+  final PlayerState playerState;
+
+  const Library({required this.playerState, super.key});
 }
 
 class _LibraryState extends State<Library> {
@@ -42,7 +44,7 @@ class _LibraryState extends State<Library> {
   }
 
   Future<(List<MediaInfo>, List<MediaInfo>)> _fetchMedia(
-      String libraryPath) async {
+      String? libraryPath) async {
     return (await listTracks(libraryPath), await listPlaylists(libraryPath));
   }
 
@@ -50,7 +52,7 @@ class _LibraryState extends State<Library> {
   Widget build(BuildContext context) {
     return Consumer<LibraryState>(builder: (context, state, child) {
       return FutureBuilder<(List<MediaInfo>, List<MediaInfo>)>(
-          future: _fetchMedia(state.libraryPath!),
+          future: _fetchMedia(state.libraryPath),
           builder: (BuildContext ctx, AsyncSnapshot snapshot) {
             // render
             Widget output;
@@ -150,6 +152,7 @@ class _LibraryState extends State<Library> {
                 appBar: PreferredSize(
                     preferredSize: const Size.fromHeight(70),
                     child: TrackSearchBar(
+                      enabled: snapshot.hasData,
                       onChange: (v) => setState(() => query = v),
                     )),
                 floatingActionButton: _isVisible
@@ -162,7 +165,11 @@ class _LibraryState extends State<Library> {
                               rootDirectory: dir,
                               fsType: FilesystemType.folder,
                             ).then((dir) {
-                              if (dir != null) state.setLibraryPath(dir);
+                              if (dir != null) {
+                                state.setLibraryPath(dir).then((_) async {
+                                  widget.playerState.updateLibraryPath();
+                                });
+                              }
                             });
                           }
 
@@ -171,10 +178,13 @@ class _LibraryState extends State<Library> {
                               if (value && !Platform.isWindows) {
                                 pathDialog(dir);
                               } else {
-                                showTextDialog(
-                                    context,
+                                showTextDialog(context,
                                     "Failed to invoke directory picker. Input library path manually",
-                                    (v) => state.setLibraryPath(v));
+                                    (v) {
+                                  state.setLibraryPath(v).then((_) async {
+                                    widget.playerState.updateLibraryPath();
+                                  });
+                                });
                               }
                             });
                           }
