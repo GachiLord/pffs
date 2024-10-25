@@ -364,6 +364,11 @@ class PlayerState extends ChangeNotifier {
     await _setLimitedVolume();
   }
 
+  Future<void> setStartVolume() async {
+    final current = _fetchCurrent();
+    await _setStartVolume(current);
+  }
+
   // observers
 
   void _playingObserver() async {
