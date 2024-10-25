@@ -18,6 +18,7 @@ class Track extends StatelessWidget {
   final PlaylistConf? playlistInfo;
   final String? playlistRelativePath;
   final int? index;
+  final List<MediaInfo> playlists;
   final Function(TrackAction)? onAction;
 
   const Track(
@@ -26,6 +27,7 @@ class Track extends StatelessWidget {
       this.libraryTracks,
       this.playlistInfo,
       this.playlistRelativePath,
+      required this.playlists,
       required this.libraryPath,
       required this.elementOf,
       required this.onAction,
@@ -42,12 +44,14 @@ class Track extends StatelessWidget {
                 state.playingObject == PlayingObject.library));
         return ListTile(
           title: Text(
-            trackInfo.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
                 color: isCurrentTrack
                     ? Theme.of(context).colorScheme.primary
                     : null,
                 fontWeight: isCurrentTrack ? FontWeight.w600 : null),
+            trackInfo.name,
           ),
           onTap: () {
             if (elementOf == PlayingObject.library) {
@@ -105,6 +109,7 @@ class Track extends StatelessWidget {
         libraryPath: libraryPath,
         onAction: onAction,
         elementOf: elementOf,
+        playlists: playlists,
       ),
     );
   }
@@ -118,9 +123,8 @@ class TrackMenu extends StatelessWidget {
   final PlaylistConf? playlistInfo;
   final String? playlistRelativePath;
   final int? playlistIndex;
-  late final Future<List<MediaInfo>> items = listPlaylists(libraryPath);
-
-  TrackMenu(
+  final List<MediaInfo> playlists;
+  const TrackMenu(
       {required this.onAction,
       required this.trackInfo,
       required this.playlistRelativePath,
@@ -128,49 +132,35 @@ class TrackMenu extends StatelessWidget {
       required this.playlistInfo,
       required this.libraryPath,
       required this.elementOf,
+      required this.playlists,
       super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        initialData: const [],
-        future: items,
-        builder: (BuildContext ctx, AsyncSnapshot snapshot) {
-          PopupMenuButton<TrackAction> output =
-              PopupMenuButton(enabled: false, itemBuilder: (_) => []);
-          if (snapshot.hasData) {
-            output = PopupMenuButton<TrackAction>(
-                icon: const Icon(Icons.more_horiz),
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<TrackAction>>[
-                      PopupMenuItem<TrackAction>(
-                        enabled: elementOf == PlayingObject.library,
-                        value: TrackAction.addToPlaylist,
-                        child: const Text("Add to playlist"),
-                        onTap: () =>
-                            addDialog(context, trackInfo, snapshot.data),
-                      ),
-                      PopupMenuItem<TrackAction>(
-                        enabled: elementOf == PlayingObject.playlist,
-                        child: const Text("Effects"),
-                        onTap: () => showModifyDialog(
-                            context,
-                            playlistInfo!,
-                            p.join(libraryPath, playlistRelativePath),
-                            playlistIndex!),
-                      ),
-                      PopupMenuItem<TrackAction>(
-                        value: TrackAction.delete,
-                        child: elementOf == PlayingObject.playlist
-                            ? const Text('Delete from playlist')
-                            : const Text('Delete'),
-                      ),
-                    ],
-                onSelected: (TrackAction a) {
-                  if (onAction != null) onAction!(a);
-                });
-          }
-          return output;
+    return PopupMenuButton<TrackAction>(
+        icon: const Icon(Icons.more_horiz),
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<TrackAction>>[
+              PopupMenuItem<TrackAction>(
+                enabled: elementOf == PlayingObject.library,
+                value: TrackAction.addToPlaylist,
+                child: const Text("Add to playlist"),
+                onTap: () => addDialog(context, trackInfo, playlists),
+              ),
+              PopupMenuItem<TrackAction>(
+                enabled: elementOf == PlayingObject.playlist,
+                child: const Text("Effects"),
+                onTap: () => showModifyDialog(context, playlistInfo!,
+                    p.join(libraryPath, playlistRelativePath), playlistIndex!),
+              ),
+              PopupMenuItem<TrackAction>(
+                value: TrackAction.delete,
+                child: elementOf == PlayingObject.playlist
+                    ? const Text('Delete from playlist')
+                    : const Text('Delete'),
+              ),
+            ],
+        onSelected: (TrackAction a) {
+          if (onAction != null) onAction!(a);
         });
   }
 }

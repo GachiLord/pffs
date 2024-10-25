@@ -47,6 +47,7 @@ class _PlatlistState extends State<Playlist> {
                           trackInfo: snapshot.data.tracks.first
                               .getMediaInfo(widget.libraryPath),
                           playlistRelativePath: widget.info.relativePath,
+                          playlists: const [],
                           index: 0,
                           playlistInfo: snapshot.data,
                           elementOf: PlayingObject.playlist,
@@ -77,6 +78,7 @@ class _PlatlistState extends State<Playlist> {
                       trackInfo: snapshot.data.tracks[index]
                           .getMediaInfo(widget.libraryPath),
                       playlistRelativePath: widget.info.relativePath,
+                      playlists: const [],
                       index: index,
                       playlistInfo: snapshot.data,
                       elementOf: PlayingObject.playlist,
@@ -99,13 +101,13 @@ class _PlatlistState extends State<Playlist> {
                     );
                   },
                   onReorder: (int oldIndex, int newIndex) {
-                    setState(() {
-                      if (oldIndex < newIndex) {
-                        newIndex -= 1;
-                      }
-                      playlist.then((value) {
-                        setTrackIndexPlaylist(
-                            widget.info.fullPath, oldIndex, newIndex);
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    playlist.then((value) {
+                      setTrackIndexPlaylist(
+                          widget.info.fullPath, oldIndex, newIndex);
+                      setState(() {
                         final item = value.tracks.removeAt(oldIndex);
                         value.tracks.insert(newIndex, item);
                         widget.playerState.flushPlaying();
