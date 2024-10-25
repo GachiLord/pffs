@@ -41,19 +41,24 @@ class _LibraryState extends State<Library> {
     });
   }
 
+  Future<(List<MediaInfo>, List<MediaInfo>)> _fetchMedia(
+      String libraryPath) async {
+    return (await listTracks(libraryPath), await listPlaylists(libraryPath));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LibraryState>(builder: (context, state, child) {
-      return FutureBuilder(
-          future: listTracks(state.libraryPath),
+      return FutureBuilder<(List<MediaInfo>, List<MediaInfo>)>(
+          future: _fetchMedia(state.libraryPath!),
           builder: (BuildContext ctx, AsyncSnapshot snapshot) {
             // render
             Widget output;
             if (snapshot.hasData) {
               // enumerate and filter values
               List<(int, MediaInfo)> data = List.empty(growable: true);
-              for (var i = 0; i < snapshot.data.length; i++) {
-                data.add((i, snapshot.data[i]));
+              for (var i = 0; i < snapshot.data.$1.length; i++) {
+                data.add((i, snapshot.data.$1[i]));
               }
               data = data
                   .where((value) =>
@@ -67,8 +72,9 @@ class _LibraryState extends State<Library> {
                 prototypeItem: data.isNotEmpty
                     ? Track(
                         index: data.first.$1,
-                        libraryTracks: snapshot.data,
+                        libraryTracks: snapshot.data.$1,
                         libraryPath: state.libraryPath!,
+                        playlists: snapshot.data.$2,
                         trackInfo: data.first.$2,
                         elementOf: PlayingObject.library,
                         onAction: (TrackAction a) => {
@@ -95,8 +101,9 @@ class _LibraryState extends State<Library> {
                 itemBuilder: (context, index) {
                   return Track(
                     index: data[index].$1,
-                    libraryTracks: snapshot.data,
+                    libraryTracks: snapshot.data.$1,
                     libraryPath: state.libraryPath!,
+                    playlists: snapshot.data.$2,
                     trackInfo: data[index].$2,
                     elementOf: PlayingObject.library,
                     onAction: (TrackAction a) => {
