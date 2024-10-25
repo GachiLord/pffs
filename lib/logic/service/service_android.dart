@@ -121,6 +121,7 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
 Future<void> handleSession(AudioSession session, PlayerState player) async {
   var lastVolume = player.volume;
+  var lastPlaying = player.playing;
 
   session.interruptionEventStream.listen((event) {
     if (event.begin) {
@@ -131,10 +132,12 @@ Future<void> handleSession(AudioSession session, PlayerState player) async {
           // Another app started playing audio and we should duck.
           break;
         case AudioInterruptionType.pause:
-          player.playPause();
+          lastPlaying = player.playing;
+          player.pause();
           break;
         case AudioInterruptionType.unknown:
-          player.playPause();
+          lastPlaying = player.playing;
+          player.pause();
           // Another app started playing audio and we should pause.
           break;
       }
@@ -145,11 +148,11 @@ Future<void> handleSession(AudioSession session, PlayerState player) async {
           // The interruption ended and we should unduck.
           break;
         case AudioInterruptionType.pause:
-          player.playPause();
+          if (lastPlaying) player.play();
           break;
         // The interruption ended and we should resume.
         case AudioInterruptionType.unknown:
-          player.playPause();
+          if (lastPlaying) player.play();
           // The interruption ended but we should not resume.
           break;
       }
@@ -157,7 +160,7 @@ Future<void> handleSession(AudioSession session, PlayerState player) async {
   });
   session.becomingNoisyEventStream.listen((_) {
     // The user unplugged the headphones, so we should pause or lower the volume.
-    player.playPause();
+    player.pause();
   });
   session.devicesChangedEventStream.listen((_) {
     player.setStartVolume();
@@ -168,7 +171,7 @@ Future<void> handleSession(AudioSession session, PlayerState player) async {
       if (await session.setActive(true) == false) {
         // The request was denied and the app should not play audio
         // e.g. a phonecall is in progress.
-        player.playPause();
+        player.pause();
       }
     }
   });

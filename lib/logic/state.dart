@@ -289,6 +289,24 @@ class PlayerState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void play() async {
+    // apply sound effect
+    var item = _fetchCurrent();
+    await _setStartVolume(item);
+
+    _player.play();
+    notifyListeners();
+  }
+
+  void pause() async {
+    // apply sound effect
+    var item = _fetchCurrent();
+    await _setStartVolume(item);
+
+    _player.pause();
+    notifyListeners();
+  }
+
   void changeShuffleMode() {
     _shuffled = !_shuffled;
     if (_shuffled) {
