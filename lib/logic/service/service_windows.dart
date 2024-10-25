@@ -23,7 +23,7 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
           } else {
             smtc.setPlaybackStatus(PlaybackStatus.Playing);
           }
-          player.playPause();
+          player.play();
           break;
         case PressedButton.pause:
           if (player.playing) {
@@ -31,7 +31,7 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
           } else {
             smtc.setPlaybackStatus(PlaybackStatus.Playing);
           }
-          player.playPause();
+          player.pause();
           break;
         case PressedButton.next:
           player.playNext();
