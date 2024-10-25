@@ -159,6 +159,9 @@ Future<void> handleSession(AudioSession session, PlayerState player) async {
     // The user unplugged the headphones, so we should pause or lower the volume.
     player.playPause();
   });
+  session.devicesChangedEventStream.listen((_) {
+    player.setStartVolume();
+  });
 
   player.playingStream.listen((v) async {
     if (v) {
