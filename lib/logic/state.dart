@@ -95,7 +95,7 @@ class PlayerState extends ChangeNotifier {
 
   String _playlistName = "Unknown";
   PlayingObject _playingObject = PlayingObject.nothing;
-  LoopMode _loopMode = LoopMode.all;
+  PlaylistMode _loopMode = PlaylistMode.all;
   List<int>? _shuffleIndexes;
   Uri? _artUri;
   MediaInfo? _track;
@@ -108,7 +108,7 @@ class PlayerState extends ChangeNotifier {
   Stream<bool> get completedStream =>
       _player.processingStateStream.map((s) => s == ProcessingState.completed);
   String? get playlistName => _playlistName;
-  LoopMode get loopMode => _loopMode;
+  PlaylistMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
   MediaInfo? get currentTrack => _track;
   Future<Uri?> get currentArtUri async {
@@ -145,7 +145,7 @@ class PlayerState extends ChangeNotifier {
     _playingObject = type;
     _playlist = p;
     _playlistName = name;
-    _loopMode = p.loopMode ?? LoopMode.all;
+    _loopMode = p.loopMode ?? PlaylistMode.all;
     _index = startIndex;
     _shuffled = p.shuffled ?? false;
     // play
@@ -336,25 +336,25 @@ class PlayerState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void changeLoopMode() {
+  void changePlaylistMode() {
     if (_player.playing == false) {
       _player.stop();
     }
     // update in player
     switch (_loopMode) {
-      case LoopMode.off:
+      case PlaylistMode.off:
         {
-          _loopMode = LoopMode.all;
+          _loopMode = PlaylistMode.all;
           break;
         }
-      case LoopMode.all:
+      case PlaylistMode.all:
         {
-          _loopMode = LoopMode.one;
+          _loopMode = PlaylistMode.one;
           break;
         }
-      case LoopMode.one:
+      case PlaylistMode.one:
         {
-          _loopMode = LoopMode.off;
+          _loopMode = PlaylistMode.off;
           break;
         }
     }
@@ -431,9 +431,9 @@ class PlayerState extends ChangeNotifier {
       if (e == ProcessingState.completed) {
         TrackConf? item;
         // handle loop mode
-        if (_loopMode == LoopMode.one) {
+        if (_loopMode == PlaylistMode.one) {
           item = _fetchCurrent();
-        } else if (_loopMode == LoopMode.off &&
+        } else if (_loopMode == PlaylistMode.off &&
             _index == _playlist!.tracks.length - 1) {
           item = null;
         } else {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:pffs/widgets/full_player.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_popup/flutter_popup.dart';
 import 'dart:io';
-import 'package:just_audio/just_audio.dart' as audio;
 
 class MiniPlayerAppBar extends StatefulWidget implements PreferredSizeWidget {
   const MiniPlayerAppBar({super.key});
@@ -33,13 +33,13 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
       final primaryColour = Theme.of(context).colorScheme.primary;
       // loopMode icon
       Widget loopModeIcon;
-      if (state.loopMode == audio.LoopMode.one) {
+      if (state.loopMode == PlaylistMode.one) {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
           child: const Icon(Icons.loop_rounded),
         );
-      } else if (state.loopMode == audio.LoopMode.all) {
+      } else if (state.loopMode == PlaylistMode.all) {
         loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
         loopModeIcon = const Icon(Icons.loop_rounded);
@@ -92,7 +92,7 @@ class _MiniPlayerAppBarState extends State<MiniPlayerAppBar> {
             color: state.shuffleOrder ? primaryColour : null),
         IconButton(
           onPressed: () {
-            state.changeLoopMode();
+            state.changePlaylistMode();
           },
           icon: loopModeIcon,
         ),

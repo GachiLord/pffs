@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_popup/flutter_popup.dart';
-import 'package:just_audio/just_audio.dart' as audio;
+import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/state.dart';
 import 'package:pffs/widgets/effect_modifier.dart';
 import 'package:provider/provider.dart';
@@ -27,13 +27,13 @@ class _FullPlayerState extends State<FullPlayer> {
       final primaryColour = colours.primary;
       // loopMode icon
       Widget loopModeIcon;
-      if (state.loopMode == audio.LoopMode.one) {
+      if (state.loopMode == PlaylistMode.one) {
         loopModeIcon = Badge(
           backgroundColor: primaryColour,
           label: const Text('1'),
           child: const Icon(Icons.loop_rounded),
         );
-      } else if (state.loopMode == audio.LoopMode.all) {
+      } else if (state.loopMode == PlaylistMode.all) {
         loopModeIcon = Icon(Icons.loop_rounded, color: primaryColour);
       } else {
         loopModeIcon = const Icon(Icons.loop_rounded);
@@ -66,7 +66,7 @@ class _FullPlayerState extends State<FullPlayer> {
             ),
             IconButton(
               onPressed: () {
-                state.changeLoopMode();
+                state.changePlaylistMode();
               },
               icon: loopModeIcon,
               iconSize: 25,
