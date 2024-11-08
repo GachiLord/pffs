@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as p;
 
 class LibraryState extends ChangeNotifier {
@@ -28,10 +28,10 @@ enum PlayingObject { library, playlist, nothing }
 
 class PlayerState extends ChangeNotifier {
   late final SharedPreferences _prefs;
-  late final Player _player;
+  late final AudioPlayer _player;
   late String? _libraryPath;
 
-  PlayerState(SharedPreferences prefs, Player player) {
+  PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
     _prefs = prefs;
     _libraryPath = _prefs.getString("libraryPath");
@@ -45,9 +45,13 @@ class PlayerState extends ChangeNotifier {
 
   // effects
 
-  void _soundEffect() async {
+  Timer? _soundEffectTask;
+  Future<void> _soundEffect() async {
+    // check if track is playing
     if (_playlist == null) return;
     if (_index! >= _playlist!.tracks.length) return;
+    // stop other tasks
+    if (_soundEffectTask != null) _soundEffectTask!.cancel();
 
     var conf = _playlist!.tracks[_index!];
 
@@ -56,12 +60,19 @@ class PlayerState extends ChangeNotifier {
     var start = conf.volume.startVolume;
     var end = conf.volume.endVolume;
     var time = conf.volume.transitionTimeSeconds;
+    var delta = (end - start).abs() / time / 10;
 
-    if (_volume == end) return;
+    // start task
+    // TODO: pick different delay
+    await Future.delayed(const Duration(milliseconds: 2000), () async {
+      _soundEffectTask =
+          Timer.periodic(const Duration(milliseconds: 100), (timer) async {
+        if (_volume == end || !_player.playing) timer.cancel();
 
-    var delta = ((end - start) / (max(1, 10 * time))).abs();
-    _volume = min(_volume + delta, end);
-    await _setLimitedVolume();
+        _volume = min(_volume + delta, end);
+        await _setLimitedVolume();
+      });
+    });
   }
 
   void _skipEffect(int posSeconds) async {
@@ -84,7 +95,7 @@ class PlayerState extends ChangeNotifier {
 
   String _playlistName = "Unknown";
   PlayingObject _playingObject = PlayingObject.nothing;
-  PlaylistMode _loopMode = PlaylistMode.loop;
+  LoopMode _loopMode = LoopMode.all;
   List<int>? _shuffleIndexes;
   Uri? _artUri;
   MediaInfo? _track;
@@ -94,9 +105,10 @@ class PlayerState extends ChangeNotifier {
   // should not be modified here, because it is a ref owned by UI
   PlaylistConf? _playlist;
 
-  Stream<bool> get completedStream => _player.stream.completed;
+  Stream<bool> get completedStream =>
+      _player.processingStateStream.map((s) => s == ProcessingState.completed);
   String? get playlistName => _playlistName;
-  PlaylistMode get loopMode => _loopMode;
+  LoopMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
   MediaInfo? get currentTrack => _track;
   Future<Uri?> get currentArtUri async {
@@ -133,7 +145,7 @@ class PlayerState extends ChangeNotifier {
     _playingObject = type;
     _playlist = p;
     _playlistName = name;
-    _loopMode = p.loopMode ?? PlaylistMode.loop;
+    _loopMode = p.loopMode ?? LoopMode.all;
     _index = startIndex;
     _shuffled = p.shuffled ?? false;
     // play
@@ -163,12 +175,14 @@ class PlayerState extends ChangeNotifier {
     // play audio
     _track = media;
     _artUri = artUri;
-    await _player.open(Media(media.fullPath), play: true);
+    await _player.setAudioSource(AudioSource.file(media.fullPath));
     // apply skipEffect
     if (item.skip.isActive) {
       var start = Duration(seconds: item.skip.start);
       await _player.seek(start);
     }
+    await _player.play();
+    if (item.volume.isActive) await _soundEffect();
   }
 
   void flushPlaying() {
@@ -186,20 +200,20 @@ class PlayerState extends ChangeNotifier {
 
   // playback
 
-  double get speed => _player.state.rate;
-  Duration get pos => _player.state.position;
-  Duration? get duration =>
-      _player.state.duration == Duration.zero ? null : _player.state.duration;
-  bool get playing => _player.state.playing;
+  double get speed => _player.speed;
+  Duration get pos => _player.position;
+  Duration? get duration => _player.duration;
+  bool get playing => _player.playing;
   bool get shuffleOrder => _shuffled;
-  Stream<bool> get playingStream => _player.stream.playing;
-  Stream<Duration> get durationStream => _player.stream.duration;
+  Stream<bool> get playingStream => _player.playingStream;
+  Stream<Duration> get durationStream =>
+      _player.durationStream.map((d) => d ?? Duration.zero);
 
   final StreamController<Duration> _seekStreamController = StreamController();
   Stream<Duration> get seekStream => _seekStreamController.stream;
 
   Future<void> _setSpeed(TrackConf item) async {
-    await _player.setRate(item.speed.isActive ? item.speed.speed : 1.0);
+    await _player.setSpeed(item.speed.isActive ? item.speed.speed : 1.0);
   }
 
   void setSuqenceIndex(int index) async {
@@ -285,7 +299,11 @@ class PlayerState extends ChangeNotifier {
     var item = _fetchCurrent();
     await _setStartVolume(item);
 
-    _player.playOrPause();
+    if (_player.playing) {
+      _player.pause();
+    } else {
+      _player.play();
+    }
     notifyListeners();
   }
 
@@ -319,24 +337,24 @@ class PlayerState extends ChangeNotifier {
   }
 
   void changeLoopMode() {
-    if (_player.state.playing == false) {
+    if (_player.playing == false) {
       _player.stop();
     }
     // update in player
     switch (_loopMode) {
-      case PlaylistMode.none:
+      case LoopMode.off:
         {
-          _loopMode = PlaylistMode.loop;
+          _loopMode = LoopMode.all;
           break;
         }
-      case PlaylistMode.loop:
+      case LoopMode.all:
         {
-          _loopMode = PlaylistMode.single;
+          _loopMode = LoopMode.one;
           break;
         }
-      case PlaylistMode.single:
+      case LoopMode.one:
         {
-          _loopMode = PlaylistMode.none;
+          _loopMode = LoopMode.off;
           break;
         }
     }
@@ -363,14 +381,14 @@ class PlayerState extends ChangeNotifier {
   double get volume => _maxVolume;
 
   void setVolume(double v) {
-    _player.setVolume(v * _volume * 100);
+    _player.setVolume(v * _volume);
     _maxVolume = v;
     _prefs.setDouble("volume", _maxVolume);
     notifyListeners();
   }
 
   Future<void> _setLimitedVolume() async {
-    await _player.setVolume(_volume * _maxVolume * 100);
+    await _player.setVolume(_volume * _maxVolume);
   }
 
   _setStartVolume(TrackConf? item) async {
@@ -390,32 +408,32 @@ class PlayerState extends ChangeNotifier {
   // observers
 
   void _playingObserver() async {
-    _player.stream.playing.listen((v) {
+    _player.playingStream.listen((v) {
       if (!v) return;
 
       var item = _fetchCurrent();
       if (item == null) return;
 
+      if (item.volume.isActive) _soundEffect();
       _setSpeed(item);
     });
   }
 
   void _positionObserver() async {
-    _player.stream.position.listen((pos) {
-      _soundEffect();
+    _player.positionStream.listen((pos) {
       _skipEffect(pos.inSeconds);
       notifyListeners();
     });
   }
 
   void _processingStateObserver() async {
-    _player.stream.completed.listen((e) {
-      if (e) {
+    _player.processingStateStream.listen((e) {
+      if (e == ProcessingState.completed) {
         TrackConf? item;
         // handle loop mode
-        if (_loopMode == PlaylistMode.single) {
+        if (_loopMode == LoopMode.one) {
           item = _fetchCurrent();
-        } else if (_loopMode == PlaylistMode.none &&
+        } else if (_loopMode == LoopMode.off &&
             _index == _playlist!.tracks.length - 1) {
           item = null;
         } else {

@@ -43,6 +43,8 @@ dependencies:
   media_kit_libs_audio: ^1.0.5
   audio_service: ^0.18.15
   flutter_popup: ^3.3.0
+  just_audio: ^0.9.42
+  just_audio_media_kit: ^2.0.6
   mpris_service:
     git:
       url: https://github.com/alexmercerind/mpris_service.git

@@ -12,19 +12,19 @@ PlaylistConf _$PlaylistConfFromJson(Map<String, dynamic> json) => PlaylistConf(
           .toList(),
     )
       ..shuffled = json['shuffled'] as bool?
-      ..loopMode = $enumDecodeNullable(_$PlaylistModeEnumMap, json['loopMode']);
+      ..loopMode = $enumDecodeNullable(_$LoopModeEnumMap, json['loopMode']);
 
 Map<String, dynamic> _$PlaylistConfToJson(PlaylistConf instance) =>
     <String, dynamic>{
       'tracks': instance.tracks,
       'shuffled': instance.shuffled,
-      'loopMode': _$PlaylistModeEnumMap[instance.loopMode],
+      'loopMode': _$LoopModeEnumMap[instance.loopMode],
     };
 
-const _$PlaylistModeEnumMap = {
-  PlaylistMode.none: 'off',
-  PlaylistMode.single: 'one',
-  PlaylistMode.loop: 'all',
+const _$LoopModeEnumMap = {
+  LoopMode.off: 'off',
+  LoopMode.one: 'one',
+  LoopMode.all: 'all',
 };
 
 TrackConf _$TrackConfFromJson(Map<String, dynamic> json) => TrackConf(
