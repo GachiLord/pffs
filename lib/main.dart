@@ -23,10 +23,7 @@ void main() async {
     JustAudioMediaKit.ensureInitialized(windows: true, linux: true);
     JustAudioMediaKit.title = 'pffs';
   }
-  var player = audio.AudioPlayer(
-    handleInterruptions: false,
-    handleAudioSessionActivation: false,
-  );
+  var player = audio.AudioPlayer();
   // init state
   var libState = LibraryState(prefs);
   var playerState = PlayerState(prefs, player);
@@ -39,7 +36,6 @@ void main() async {
     // handle audio session
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.music());
-    android_service.handleSession(session, playerState);
     // handle audio service
     var _ = await AudioService.init(
       builder: () => android_service.AudioHandler(playerState),

@@ -26,6 +26,9 @@ class LibraryState extends ChangeNotifier {
 
 enum PlayingObject { library, playlist, nothing }
 
+const Duration soundEffectDelay = Duration(seconds: 3);
+const Duration seekUnloadedDelay = Duration(milliseconds: 500);
+
 class PlayerState extends ChangeNotifier {
   late final SharedPreferences _prefs;
   late final AudioPlayer _player;
@@ -45,13 +48,15 @@ class PlayerState extends ChangeNotifier {
 
   // effects
 
+  Timer? _soundEffectTaskScheduler;
   Timer? _soundEffectTask;
   Future<void> _soundEffect() async {
     // check if track is playing
     if (_playlist == null) return;
     if (_index! >= _playlist!.tracks.length) return;
     // stop other tasks
-    if (_soundEffectTask != null) _soundEffectTask!.cancel();
+    _soundEffectTask?.cancel();
+    _soundEffectTaskScheduler?.cancel();
 
     var conf = _playlist!.tracks[_index!];
 
@@ -63,13 +68,16 @@ class PlayerState extends ChangeNotifier {
     var delta = (end - start).abs() / time / 10;
 
     // start task
-    // TODO: pick different delay
-    await Future.delayed(const Duration(milliseconds: 2000), () async {
+    _soundEffectTaskScheduler = Timer(soundEffectDelay, () async {
+      _soundEffectTask?.cancel();
       _soundEffectTask =
           Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-        if (_volume == end || !_player.playing) timer.cancel();
+        if (_volume == end || !_player.playing) {
+          timer.cancel();
+        }
 
         _volume = min(_volume + delta, end);
+        print(_volume);
         await _setLimitedVolume();
       });
     });
@@ -105,8 +113,8 @@ class PlayerState extends ChangeNotifier {
   // should not be modified here, because it is a ref owned by UI
   PlaylistConf? _playlist;
 
-  Stream<bool> get completedStream =>
-      _player.processingStateStream.map((s) => s == ProcessingState.completed);
+  final StreamController<bool> _completedStreamController = StreamController();
+  Stream<bool> get completedStream => _completedStreamController.stream;
   String? get playlistName => _playlistName;
   PlaylistMode get loopMode => _loopMode;
   PlaylistConf? get currentPlaylist => _playlist;
@@ -159,6 +167,7 @@ class PlayerState extends ChangeNotifier {
         // handle normal mode
         await _playItem(p.tracks[_index!]);
       }
+      _completedStreamController.add(true);
     }
     notifyListeners();
   }
@@ -172,9 +181,11 @@ class PlayerState extends ChangeNotifier {
     var media = item.getMediaInfo(_libraryPath!);
     var artUri = await getMediaArtUri(media.fullPath) ??
         await getMediaArtUri(p.join(_libraryPath!, _playlistName));
-    // play audio
+    // update media info
     _track = media;
     _artUri = artUri;
+    _completedStreamController.add(true);
+    // play audio
     await _player.setAudioSource(AudioSource.file(media.fullPath));
     // apply skipEffect
     if (item.skip.isActive) {
@@ -182,7 +193,7 @@ class PlayerState extends ChangeNotifier {
       await _player.seek(start);
     }
     await _player.play();
-    if (item.volume.isActive) await _soundEffect();
+    if (item.volume.isActive) _soundEffect();
   }
 
   void flushPlaying() {
@@ -200,6 +211,7 @@ class PlayerState extends ChangeNotifier {
 
   // playback
 
+  ProcessingState get processingState => _player.processingState;
   double get speed => _player.speed;
   Duration get pos => _player.position;
   Duration? get duration => _player.duration;
@@ -227,7 +239,7 @@ class PlayerState extends ChangeNotifier {
     // apply sound effect
     await _setStartVolume(item);
     // play
-    _playItem(item);
+    await _playItem(item);
     notifyListeners();
   }
 
@@ -367,10 +379,16 @@ class PlayerState extends ChangeNotifier {
     }
   }
 
-  void setPos(int pos) {
-    _setStartVolume(_fetchCurrent());
+  Future<void> setPos(int pos) async {
+    await _setStartVolume(_fetchCurrent());
+    _soundEffect();
     _seekStreamController.add(Duration(milliseconds: pos));
-    _player.seek(Duration(milliseconds: pos));
+    if (_player.processingState != ProcessingState.ready) {
+      Future.delayed(
+          seekUnloadedDelay, () => _player.seek(Duration(milliseconds: pos)));
+    } else {
+      _player.seek(Duration(milliseconds: pos));
+    }
   }
 
   // sound
@@ -427,7 +445,7 @@ class PlayerState extends ChangeNotifier {
   }
 
   void _processingStateObserver() async {
-    _player.processingStateStream.listen((e) {
+    _player.processingStateStream.listen((e) async {
       if (e == ProcessingState.completed) {
         TrackConf? item;
         // handle loop mode
