@@ -1,5 +1,4 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:audio_session/audio_session.dart';
 import 'package:pffs/logic/state.dart';
 
 class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
@@ -16,7 +15,7 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         playbackState.add(PlaybackState(
           controls: [
             MediaControl.skipToPrevious,
-            v ? MediaControl.play : MediaControl.pause,
+            v ? MediaControl.pause : MediaControl.play,
             MediaControl.skipToNext,
           ],
           systemActions: const {
@@ -26,8 +25,8 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           },
           androidCompactActionIndices: const [0, 1, 3],
           processingState: AudioProcessingState.ready,
-          playing: true,
-          updatePosition: Duration.zero,
+          playing: _player.playing,
+          updatePosition: _player.pos,
           speed: _player.speed,
           queueIndex: _player.currentIndex,
         ));
@@ -46,7 +45,7 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         playbackState.add(PlaybackState(
           controls: [
             MediaControl.skipToPrevious,
-            v ? MediaControl.play : MediaControl.pause,
+            v ? MediaControl.pause : MediaControl.play,
             MediaControl.skipToNext,
           ],
           systemActions: const {
@@ -117,62 +116,4 @@ class AudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Future<void> skipToPrevious() {
     return _player.playPrevious();
   }
-}
-
-Future<void> handleSession(AudioSession session, PlayerState player) async {
-  var lastVolume = player.volume;
-  var lastPlaying = player.playing;
-
-  session.interruptionEventStream.listen((event) {
-    if (event.begin) {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          lastVolume = player.volume;
-          player.setVolume(0.2);
-          // Another app started playing audio and we should duck.
-          break;
-        case AudioInterruptionType.pause:
-          lastPlaying = player.playing;
-          player.pause();
-          break;
-        case AudioInterruptionType.unknown:
-          lastPlaying = player.playing;
-          player.pause();
-          // Another app started playing audio and we should pause.
-          break;
-      }
-    } else {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          player.setVolume(lastVolume);
-          // The interruption ended and we should unduck.
-          break;
-        case AudioInterruptionType.pause:
-          if (lastPlaying) player.play();
-          break;
-        // The interruption ended and we should resume.
-        case AudioInterruptionType.unknown:
-          if (lastPlaying) player.play();
-          // The interruption ended but we should not resume.
-          break;
-      }
-    }
-  });
-  session.becomingNoisyEventStream.listen((_) {
-    // The user unplugged the headphones, so we should pause or lower the volume.
-    player.pause();
-  });
-  session.devicesChangedEventStream.listen((_) {
-    player.setStartVolume();
-  });
-
-  player.playingStream.listen((v) async {
-    if (v) {
-      if (await session.setActive(true) == false) {
-        // The request was denied and the app should not play audio
-        // e.g. a phonecall is in progress.
-        player.pause();
-      }
-    }
-  });
 }

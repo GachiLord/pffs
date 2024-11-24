@@ -22,9 +22,9 @@ Map<String, dynamic> _$PlaylistConfToJson(PlaylistConf instance) =>
     };
 
 const _$PlaylistModeEnumMap = {
-  PlaylistMode.none: 'off',
-  PlaylistMode.single: 'one',
-  PlaylistMode.loop: 'all',
+  PlaylistMode.off: 'off',
+  PlaylistMode.one: 'one',
+  PlaylistMode.all: 'all',
 };
 
 TrackConf _$TrackConfFromJson(Map<String, dynamic> json) => TrackConf(
