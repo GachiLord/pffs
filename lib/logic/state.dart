@@ -77,7 +77,6 @@ class PlayerState extends ChangeNotifier {
         }
 
         _volume = min(_volume + delta, end);
-        print(_volume);
         await _setLimitedVolume();
       });
     });
