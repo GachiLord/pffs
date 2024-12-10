@@ -18,20 +18,12 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     smtc.buttonPressStream.listen((event) {
       switch (event) {
         case PressedButton.play:
-          if (player.playing) {
-            smtc.setPlaybackStatus(PlaybackStatus.Paused);
-          } else {
-            smtc.setPlaybackStatus(PlaybackStatus.Playing);
-          }
-          player.play();
+          smtc.setPlaybackStatus(PlaybackStatus.Playing);
+          player.playPause();
           break;
         case PressedButton.pause:
-          if (player.playing) {
-            smtc.setPlaybackStatus(PlaybackStatus.Paused);
-          } else {
-            smtc.setPlaybackStatus(PlaybackStatus.Playing);
-          }
-          player.pause();
+          smtc.setPlaybackStatus(PlaybackStatus.Paused);
+          player.playPause();
           break;
         case PressedButton.next:
           player.playNext();
