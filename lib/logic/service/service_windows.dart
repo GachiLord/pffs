@@ -32,8 +32,9 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
           player.playPrevious();
           break;
         case PressedButton.stop:
-          player.flushPlaying();
+          player.pause();
           smtc.setPlaybackStatus(PlaybackStatus.Stopped);
+	  smtc.disableSmtc();
           break;
         default:
           print("event $event is not implemented");
@@ -47,6 +48,8 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   // handle player events
   player.completedStream.listen((v) async {
     if (player.currentTrack != null && v) {
+      if (!smtc.enabled) smtc.enableSmtc();
+
       smtc.setPlaybackStatus(PlaybackStatus.Playing);
 
       smtc.updateMetadata(
@@ -59,6 +62,8 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   });
   player.playingStream.listen((v) async {
     if (player.currentTrack != null && v) {
+      if (!smtc.enabled) smtc.enableSmtc();
+
       smtc.setPlaybackStatus(
           v ? PlaybackStatus.Playing : PlaybackStatus.Paused);
 
