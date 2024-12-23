@@ -453,6 +453,7 @@ class PlayerState extends ChangeNotifier {
         } else if (_loopMode == PlaylistMode.off &&
             _index == _playlist!.tracks.length - 1) {
           item = null;
+          pause();
         } else {
           item = _fetchNext();
         }

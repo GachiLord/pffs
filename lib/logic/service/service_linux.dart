@@ -7,6 +7,7 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
     identity: 'pffs',
     desktopEntry: '/usr/share/applications/pffs',
   );
+  instance.canQuit = true;
   // handle mpris events
   instance.setEventHandler(
     MPRISEventHandler(
@@ -18,7 +19,12 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
                 : MPRISPlaybackStatus.playing;
       },
       stop: () async {
-        player.flushPlaying();
+        player.pause();
+        instance.canRaise = false;
+        instance.canPlay = false;
+        instance.canControl = false;
+        instance.canGoNext = false;
+        instance.canGoPrevious = false;
         instance.playbackStatus = MPRISPlaybackStatus.stopped;
       },
       play: () async {
@@ -40,6 +46,12 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   // handle player events
   player.completedStream.listen((v) async {
     if (player.currentTrack != null && v) {
+      instance.canRaise = true;
+      instance.canPlay = true;
+      instance.canControl = true;
+      instance.canGoNext = true;
+      instance.canGoPrevious = true;
+
       instance.playbackStatus = MPRISPlaybackStatus.playing;
 
       final trackPath = player.currentTrack!.fullPath;
@@ -54,6 +66,12 @@ Future<void> service(PlayerState player, LibraryState prefs) async {
   });
   player.playingStream.listen((v) async {
     if (player.currentTrack != null && v) {
+      instance.canRaise = true;
+      instance.canPlay = true;
+      instance.canControl = true;
+      instance.canGoNext = true;
+      instance.canGoPrevious = true;
+
       instance.playbackStatus =
           v ? MPRISPlaybackStatus.playing : MPRISPlaybackStatus.paused;
 
