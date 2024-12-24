@@ -78,7 +78,7 @@ Future<List<MediaInfo>> listTracks(String? libraryPath) async {
   // get mediainfo
   for (var entity in entities) {
     var fullPath = entity.path;
-    var fileName = p.basename(fullPath);
+    var fileName = p.relative(fullPath, from: libraryPath);
     if (musicFiles.contains(p.extension(fullPath).toLowerCase())) {
       var name = p.basenameWithoutExtension(fileName);
       var artUri = await getMediaArtUri(fullPath);
