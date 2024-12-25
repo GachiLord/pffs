@@ -6,6 +6,7 @@ import 'package:pffs/logic/core.dart';
 import 'package:pffs/logic/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
+import 'dart:io' as io;
 
 class LibraryState extends ChangeNotifier {
   final SharedPreferences _prefs;
@@ -184,8 +185,13 @@ class PlayerState extends ChangeNotifier {
     _track = media;
     _artUri = artUri;
     _completedStreamController.add(true);
+    // check if file exists
+    final exists = await io.File(media.fullPath).exists();
     // play audio
-    await _player.setAudioSource(AudioSource.file(media.fullPath));
+    await _player.setAudioSource(exists
+        ? AudioSource.file(media.fullPath)
+        // if file does not exist, play silence
+        : AudioSource.asset("assets/silence.mp3"));
     // apply skipEffect
     if (item.skip.isActive) {
       var start = Duration(seconds: item.skip.start);
