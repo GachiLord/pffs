@@ -184,7 +184,6 @@ class PlayerState extends ChangeNotifier {
     // update media info
     _track = media;
     _artUri = artUri;
-    _completedStreamController.add(true);
     // check if file exists
     final exists = await io.File(media.fullPath).exists();
     // play audio
@@ -199,6 +198,7 @@ class PlayerState extends ChangeNotifier {
     }
     await _player.play();
     if (item.volume.isActive) _soundEffect();
+    _completedStreamController.add(true);
   }
 
   void flushPlaying() {
