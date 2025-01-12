@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:pffs/logic/core.dart';
 import 'package:path/path.dart' as p;
+import 'dart:io' show Platform;
 
 class MediaInfo {
   final Uri? artUri;
@@ -125,7 +126,7 @@ Future<void> setTrackPlaylist(
 Future<void> addToPlaylist(String playlistFullPath, MediaInfo trackInfo) async {
   var playlist = await load(playlistFullPath);
   playlist.tracks.add(TrackConf(
-      relativePath: trackInfo.relativePath,
+      relativePath: Platform.isWindows ? trackInfo.relativePath.replaceAll(p.windows.separator, p.posix.separator) : trackInfo.relativePath,
       volume: VolumeConf(),
       skip: SkipConf()));
   await save(playlistFullPath, playlist);
