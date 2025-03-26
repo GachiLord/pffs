@@ -20,6 +20,13 @@ static void my_application_activate(GApplication* application) {
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
+  // parse no-bar flag
+  gboolean no_bar_flag = FALSE;
+  char** args = self->dart_entrypoint_arguments;
+  while (*args != NULL) {
+    no_bar_flag = g_strcmp0(*args, "--no-bar") == 0;
+    args++;
+  }
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
   // desktop).
@@ -37,7 +44,7 @@ static void my_application_activate(GApplication* application) {
     }
   }
 #endif
-  if (use_header_bar) {
+  if (use_header_bar && no_bar_flag == FALSE) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
     gtk_header_bar_set_title(header_bar, "pffs");
