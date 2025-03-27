@@ -14,6 +14,8 @@ class PlaylistConf {
 
   PlaylistConf({required this.tracks});
 
+  int get length => tracks.length;
+
   /// Connect the generated [_$PlaylistConfFromJson] function to the `fromJson`
   /// factory.
   factory PlaylistConf.fromJson(Map<String, dynamic> json) =>

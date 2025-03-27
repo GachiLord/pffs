@@ -38,6 +38,7 @@ class PlayerState extends ChangeNotifier {
   PlayerState(SharedPreferences prefs, AudioPlayer player) {
     _player = player;
     _prefs = prefs;
+    // load settings from previous run
     _libraryPath = _prefs.getString("libraryPath");
     _maxVolume = prefs.getDouble("volume") ?? 1.0;
     _player.setVolume(_maxVolume);
@@ -149,7 +150,7 @@ class PlayerState extends ChangeNotifier {
   }
 
   Future<void> setSequence(
-      PlaylistConf p, PlayingObject type, String name, int startIndex) async {
+      PlaylistConf p, PlayingObject type, String name, int startIndex, {bool shouldStart = true}) async {
     _playingObject = type;
     _playlist = p;
     _playlistName = name;
@@ -162,17 +163,17 @@ class PlayerState extends ChangeNotifier {
         // handle shuffled mode
         _createShuffleIndexes(p.tracks.length);
         _index = _shuffleIndexes!.indexOf(_index!);
-        await _playItem(p.tracks[startIndex]);
+        await _playItem(p.tracks[startIndex], shouldStart: shouldStart);
       } else {
         // handle normal mode
-        await _playItem(p.tracks[_index!]);
+        await _playItem(p.tracks[_index!], shouldStart: shouldStart);
       }
       _completedStreamController.add(true);
     }
     notifyListeners();
   }
 
-  Future<void> _playItem(TrackConf item) async {
+  Future<void> _playItem(TrackConf item, {shouldStart = true}) async {
     // handle sound effect
     await _setStartVolume(item);
     // handle speed effect
@@ -196,9 +197,22 @@ class PlayerState extends ChangeNotifier {
       var start = Duration(seconds: item.skip.start);
       await _player.seek(start);
     }
-    await _player.play();
+    if (shouldStart) {
+      await _player.play();
+    }
+    else {
+      await _player.pause();
+    }
     if (item.volume.isActive) _soundEffect();
     _completedStreamController.add(true);
+    // persist playback state
+    _prefs.setInt("objectType", _playingObject.index);
+    if (_index != null) {
+      _prefs.setInt("trackIndex", _index!);
+    }
+    if (_playlistName != null && _libraryPath != null) {
+      _prefs.setString("playlistPath", p.join(_libraryPath!, _playlistName!) + ".json");
+    }
   }
 
   void flushPlaying() {
