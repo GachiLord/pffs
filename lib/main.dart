@@ -8,6 +8,9 @@ import 'package:pffs/widgets/mini_player.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/library.dart';
+import 'logic/storage.dart';
+import 'logic/core.dart';
+import 'package:path/path.dart' as p;
 import 'package:just_audio/just_audio.dart' as audio;
 import 'package:pffs/logic/service/service_linux.dart' as linux_service;
 import 'package:pffs/logic/service/service_windows.dart' as windows_service;
@@ -26,7 +29,43 @@ void main() async {
   var player = audio.AudioPlayer();
   // init state
   var libState = LibraryState(prefs);
-  var playerState = PlayerState(prefs, player);
+  var playerState = await PlayerState(prefs, player);
+  // try to load last playlist and track
+  final int? objectType = prefs.getInt("objectType");
+  final int? trackIndex = prefs.getInt("trackIndex");
+  final String? playlistPath = prefs.getString("playlistPath");
+  final String? libraryPath = prefs.getString("libraryPath");
+
+  try {
+    if (objectType == PlayingObject.library.index && libraryPath != null && trackIndex != null) {
+      final tracks = await listTracks(libraryPath);
+
+      if (trackIndex < tracks.length) {
+        // create playlist from library
+        var conf = PlaylistConf(
+            tracks: tracks
+                .map((v) => TrackConf(relativePath: v.relativePath))
+                .toList(growable: false));
+        playerState.setSequence(conf, PlayingObject.library, "library", trackIndex, shouldStart: false);
+      }      
+      else {
+        prefs.remove("objectType");
+        prefs.remove("trackIndex");
+        prefs.remove("playlistPath");
+      }
+    }
+
+    if (objectType == PlayingObject.playlist.index && playlistPath != null && trackIndex != null) {
+      final conf = await load(playlistPath);
+      playerState.setSequence(conf, PlayingObject.playlist, p.basenameWithoutExtension(playlistPath), trackIndex, shouldStart: false);
+    }
+  }
+  catch(e) {
+    print(e);
+    prefs.remove("objectType");
+    prefs.remove("trackIndex");
+    prefs.remove("playlistPath");
+  }
   // init background audio service
   if (Platform.isLinux) {
     linux_service.service(playerState, libState);
