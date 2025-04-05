@@ -103,7 +103,7 @@ jobs:
           ls
           tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz pffs-linux-bundle-${{ needs.get-version.outputs.version }}/* 
           zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}/*
-          mv pffs-apk-${{ needs.get-version.outputs.version }} pffs-${{ needs.get-version.outputs.version }}.apk
+          mv pffs-apk-${{ needs.get-version.outputs.version }}/*.apk pffs-${{ needs.get-version.outputs.version }}.apk
       - run: |
           gh release create -d -R GachiLord/pffs \
             ${{ needs.get-version.outputs.version }} \
