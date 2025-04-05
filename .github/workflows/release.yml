@@ -53,7 +53,7 @@ jobs:
         with:
           name: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
           path: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
-      - run: tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }} pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz
+      - run: tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }}/* pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz
       - run: gh release create ${{ needs.get-version.outputs.version }} pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz
 
 #  build-apk:
