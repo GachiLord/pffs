@@ -1,13 +1,13 @@
 name: release
 on:
-	push:
-		branches:
-			- main
-		tags:
-			- v*
+  push:
+    branches:
+      - main
+    tags:
+      - v*
 jobs:
-	linux-release:
-		runs-on: ubuntu-latest
+  build-linux:
+    runs-on: ubuntu-latest
 		steps:
 			- name: Clone repository
 				uses: actions/checkout@v4
@@ -15,6 +15,6 @@ jobs:
 				uses: subosito/flutter-action@v2
 				with:
 					channel: stable
-					flutter-version: 3.24.5
-			- run: flutter build linux
+					flutter-version: 3.19.0
+			- run: flutter --version
 
