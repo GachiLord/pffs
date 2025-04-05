@@ -61,7 +61,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pffs-apk-${{ needs.get-version.outputs.version }}
+          name: pffs-apk-${{ needs.get-version.outputs.version }}.apk
           path: ./build/app/outputs/flutter-apk/pffs-${{ needs.get-version.outputs.version }}.apk
 
   build-windows:
