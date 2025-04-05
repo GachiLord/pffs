@@ -4,10 +4,10 @@ on:
     branches:
       - main
     tags:
-      - v*
+   		- v*
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+	build-linux:
+		runs-on: ubuntu-latest
 		steps:
 			- name: Clone repository
 				uses: actions/checkout@v4
