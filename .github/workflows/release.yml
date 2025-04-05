@@ -9,6 +9,9 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
+			- uses: actions/checkout@v4
+				with:
+					fetch-depth: 0 # Required due to the way Git works, without it this action won't be able to find any or the correct tags 
       - id: get_version
         run: |
           echo "version=" >> "$GITHUB_OUTPUT"
