@@ -105,7 +105,7 @@ jobs:
           zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}/*
       - run: |
           gh release create -d -R GachiLord/pffs \
-            ${{ needs.get-version.outputs.version }} \ 
+            ${{ needs.get-version.outputs.version }} \
             pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz \
             pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip \
             pffs-${{ needs.get-version.outputs.version }}.apk
