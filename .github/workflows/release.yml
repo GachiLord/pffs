@@ -17,20 +17,20 @@ jobs:
           flutter-version: 3.24.5
       - run: flutter pub get
       - run: flutter build linux
-			- name: Upload artifact
-			- uses: actions/upload-artifact@v4
-      	with:
-          name: artifact-linux
-          path: ./build/linux/x64/release/bundle/
-	release:
-		needs: build-linux
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/download-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: artifact-linux
-			- run: ls
-			- run: gh --help
+          path: ./build/linux/x64/release/bundle/
+  release:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact-linux
+      - run: ls
+      - run: gh --help
 
 #  build-apk:
 #    runs-on: ubuntu-latest
