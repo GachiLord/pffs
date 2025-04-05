@@ -98,7 +98,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: pffs-*-${{ needs.get-version.outputs.version }}
-          path: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
+          path: ./
       - run: |
           ls
           tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz pffs-linux-bundle-${{ needs.get-version.outputs.version }}/* 
