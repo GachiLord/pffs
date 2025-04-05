@@ -6,18 +6,18 @@ on:
 jobs:
   get-version:
     runs-on: ubuntu-latest
-		outputs:
-			version: ${{ steps.get_version.outputs.version }}
-		steps:
-			- id: get_version
-				run: |
-					echo "version=" >> "$GITHUB_OUTPUT"
-					git describe --tags --abbrev=0 >> "$GITHUB_OUTPUT"
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - id: get_version
+        run: |
+          echo "version=" >> "$GITHUB_OUTPUT"
+          git describe --tags --abbrev=0 >> "$GITHUB_OUTPUT"
       
     
   build-linux:
     runs-on: ubuntu-latest
-		needs: get-version
+    needs: get-version
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
-					path: ./linux/
+          path: ./linux/
       - run: ls
       - run: gh --help
 
