@@ -101,7 +101,7 @@ jobs:
           path: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
       - run: |
           tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz pffs-linux-bundle-${{ needs.get-version.outputs.version }}/* 
-          zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip pffs-windows-${{ needs.get-version.outputs.version }}/*
+          zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}/*
       - run: |
           gh release create -d -R GachiLord/pffs \
             ${{ needs.get-version.outputs.version }} \ 
