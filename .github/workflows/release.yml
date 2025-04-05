@@ -1,8 +1,6 @@
 name: release
 on:
   push:
-    branches:
-      - main
     tags:
       - '*'
 jobs:
@@ -15,6 +13,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
           flutter-version: 3.19.0
       - run: flutter --version
 
