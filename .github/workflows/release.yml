@@ -14,8 +14,7 @@ jobs:
           fetch-depth: 0 # Required due to the way Git works, without it this action won't be able to find any or the correct tags 
       - id: get_version
         run: |
-          echo "version=" >> "$GITHUB_OUTPUT"
-          git describe --tags --abbrev=0 >> "$GITHUB_OUTPUT"
+          echo "version=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
       
     
   build-linux:
@@ -45,7 +44,9 @@ jobs:
           name: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
           path: ./build/linux/x64/release/bundle/
   release:
-    needs: build-linux
+    needs: 
+      - get-version
+      - build-linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
