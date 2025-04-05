@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: *${{ needs.get-version.outputs.version }}*
+          pattern: \*${{ needs.get-version.outputs.version }}*
           path: ./
       - run: |
           ls
