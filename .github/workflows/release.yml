@@ -4,8 +4,20 @@ on:
     tags:
       - '*'
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+		outputs:
+			version: ${{ steps.get_version.outputs.version }}
+		steps:
+			- id: get_version
+				run: |
+					echo "version=" >> "$GITHUB_OUTPUT"
+					git describe --tags --abbrev=0 >> "$GITHUB_OUTPUT"
+      
+    
   build-linux:
     runs-on: ubuntu-latest
+		needs: get-version
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -27,7 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-linux
+          name: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
           path: ./build/linux/x64/release/bundle/
   release:
     needs: build-linux
@@ -35,7 +47,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact-linux
+          name: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
+					path: ./linux/
       - run: ls
       - run: gh --help
 
