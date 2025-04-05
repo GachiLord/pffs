@@ -100,6 +100,7 @@ jobs:
           pattern: pffs-*-${{ needs.get-version.outputs.version }}
           path: pffs-linux-bundle-${{ needs.get-version.outputs.version }}
       - run: |
+          ls
           tar -cf pffs-linux-bundle-${{ needs.get-version.outputs.version }}.tar.gz pffs-linux-bundle-${{ needs.get-version.outputs.version }}/* 
           zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}.zip pffs-windows-bundle-${{ needs.get-version.outputs.version }}/*
       - run: |
