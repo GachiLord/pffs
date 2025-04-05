@@ -17,7 +17,6 @@ jobs:
           flutter-version: 3.24.5
       - run: flutter pub get
       - run: flutter build linux
-      - run: tar -cf "pffs-$(git describe --tags --abbrev=0).tar.gz" "*"
 			- name: Upload artifact
 			- uses: actions/upload-artifact@v4
       	with:
