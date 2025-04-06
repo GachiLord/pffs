@@ -33,6 +33,7 @@ App is intended to run on Android, Linux and Windows and be as simple as possibl
 * To change the order of tracks in a playlist on Android, press and hold, then drag.
 * To set image for a track, create file TrackName.png in the same folder.
 * To set image for a playlist, create file PlaylistName.png in the same folder.
+* To hide header bar on Linux(which is usually done by your window manager) execute pffs with "--no-bar" flag
 
 ## Installation
 
