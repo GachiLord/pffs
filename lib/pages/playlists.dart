@@ -56,17 +56,18 @@ class _PlaylistsState extends State<Playlists> {
                 floatingActionButton: _isVisible
                     ? FloatingActionButton(
                         onPressed: () {
-                          showTextDialog(context, "Create a playlist", (name) {
-                            createPlaylist(widget.path!, name,
-                                    PlaylistConf(tracks: []))
-                                .then((info) => items.then((value) {
-                                      setState(() => value.add(info));
-                                    }))
-                                .catchError((_) {
+                          showTextDialogWithPath(context, widget.path!, "Create a playlist", (name, path) async {
+                            try {
+                              final conf = path != null ? createPlaylistFromDir(path!) as PlaylistConf: PlaylistConf(tracks: []);
+                              final playlist = await createPlaylist(widget.path!, name, conf);
+
+                              var value = await items;
+                              value.add(playlist);
+                            } catch(_) {
                               if (context.mounted) {
                                 showToast(context, "Name exists or invalid");
                               }
-                            });
+                            }
                           });
                         },
                         child: const Icon(Icons.add),
