@@ -108,6 +108,16 @@ Future<MediaInfo> createPlaylist(
   return MediaInfo(artUri, relativePath, path, name);
 }
 
+Future<PlaylistConf> createPlaylistFromDir(String libraryPath, String relativeDirPath) async {
+  var tracks = await listTracks(p.join(libraryPath, relativeDirPath));
+
+  tracks.sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  
+  return PlaylistConf(
+    tracks: tracks.map((t) => TrackConf(relativePath: p.Context(style: p.Style.posix).join(relativeDirPath, t.relativePath))).toList()
+  );
+}
+
 Future<void> setTrackIndexPlaylist(
     String playlistFullPath, int oldIndex, int newIndex) async {
   var playlist = await load(playlistFullPath);
