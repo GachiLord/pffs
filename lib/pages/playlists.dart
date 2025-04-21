@@ -58,12 +58,13 @@ class _PlaylistsState extends State<Playlists> {
                         onPressed: () {
                           showTextDialogWithPath(context, widget.path!, "Create a playlist", (name, path) async {
                             try {
-                              final conf = path != null ? createPlaylistFromDir(path!) as PlaylistConf: PlaylistConf(tracks: []);
+                              final conf = path != null ? await createPlaylistFromDir(path!): PlaylistConf(tracks: []);
                               final playlist = await createPlaylist(widget.path!, name, conf);
 
                               var value = await items;
                               value.add(playlist);
-                            } catch(_) {
+                            } catch(e) {
+                              print(e);
                               if (context.mounted) {
                                 showToast(context, "Name exists or invalid");
                               }

@@ -109,9 +109,13 @@ Future<MediaInfo> createPlaylist(
 }
 
 Future<PlaylistConf> createPlaylistFromDir(String relativeDirPath) async {
-  var tracks = await listPlaylists(relativeDirPath);
+  var tracks = await listTracks(relativeDirPath);
+
+  tracks.sort((a, b) => a.relativePath.compareTo(b.relativePath));
   
-  return PlaylistConf(tracks: tracks.map((t) => TrackConf(relativePath: t.relativePath)).toList());  
+  return PlaylistConf(
+    tracks: tracks.map((t) => TrackConf(relativePath: p.join(p.basename(relativeDirPath), t.relativePath))).toList()
+  );
 }
 
 Future<void> setTrackIndexPlaylist(
