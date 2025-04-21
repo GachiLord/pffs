@@ -98,7 +98,7 @@ void showTextDialogWithPath(
         content: SingleChildScrollView(
           child: ListBody(
             children: [
-              TextButton(
+              FilledButton.tonal(
                 child: Text("Provide optional playlist directory path"),
                 onPressed: () {
                   void pathDialog(Directory dir) {
