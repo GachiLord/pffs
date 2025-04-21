@@ -56,7 +56,6 @@ Future<List<MediaInfo>> listPlaylistTracks(
 }
 
 Future<List<MediaInfo>> listTracks(String? libraryPath) async {
-  print(libraryPath);
   List<MediaInfo> items = List.empty(growable: true);
   const musicFiles = [
     ".mp3",
@@ -115,7 +114,7 @@ Future<PlaylistConf> createPlaylistFromDir(String libraryPath, String relativeDi
   tracks.sort((a, b) => a.relativePath.compareTo(b.relativePath));
   
   return PlaylistConf(
-    tracks: tracks.map((t) => TrackConf(relativePath: p.join(relativeDirPath, t.relativePath))).toList()
+    tracks: tracks.map((t) => TrackConf(relativePath: p.Context(style: p.Style.posix).join(relativeDirPath, t.relativePath))).toList()
   );
 }
 
